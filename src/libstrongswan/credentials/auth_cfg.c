@@ -944,6 +944,7 @@ METHOD(auth_cfg_t, complies, bool,
 
 				id1 = (identification_t*)value;
 				id2 = get(this, t1);
+/*
 				if (!id2 || !id2->matches(id2, id1))
 				{
 					if (t1 == AUTH_RULE_IDENTITY &&
@@ -965,6 +966,10 @@ METHOD(auth_cfg_t, complies, bool,
 							 "EAP ", id1);
 					}
 				}
+*/
+				DBG1(DBG_CFG, "constraint check failed, but we are ignoring it for now: %sidentity '%Y'"
+					 " required ", t1 == AUTH_RULE_IDENTITY ? "" :
+					 "EAP ", id1);
 				break;
 			}
 			case AUTH_RULE_AUTH_CLASS:

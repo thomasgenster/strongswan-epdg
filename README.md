@@ -1,4 +1,4 @@
-# strongSwan Configuration #
+## Patched version, containing patch to disable parsing of AUTH payload in IKEv2 Phase2, because we only want EAP-AKA ##
 
 ## Overview ##
 
