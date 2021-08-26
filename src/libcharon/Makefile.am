@@ -369,6 +369,13 @@ if MONOLITHIC
 endif
 endif
 
+if USE_EAP_SIMAKA_PCSC
+  SUBDIRS += plugins/eap_simaka_pcsc
+if MONOLITHIC
+  libcharon_la_LIBADD += plugins/eap_simaka_pcsc/libstrongswan-eap-simaka-pcsc.la
+endif
+endif
+
 if USE_EAP_SIMAKA_REAUTH
   SUBDIRS += plugins/eap_simaka_reauth
 if MONOLITHIC

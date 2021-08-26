@@ -3,6 +3,8 @@
 # Copyright (C) 2006-2019 Andreas Steffen
 # Copyright (C) 2006-2014 Martin Willi
 # HSR Hochschule fuer Technik Rapperswil
+# Copyright (C) 2017 Domonkos P. Tomcsanyi
+# P3 Communications Gmbh.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -199,7 +201,8 @@ ARG_ENABL_SET([eap-sim-pcsc],   [enable EAP-SIM backend based on a smartcard rea
 ARG_ENABL_SET([eap-aka],        [enable EAP AKA authentication module.])
 ARG_ENABL_SET([eap-aka-3gpp],   [enable EAP AKA backend implementing 3GPP MILENAGE algorithms in software.])
 ARG_ENABL_SET([eap-aka-3gpp2],  [enable EAP AKA backend implementing 3GPP2 algorithms in software. Requires libgmp.])
-ARG_ENABL_SET([eap-simaka-sql], [enable EAP-SIM/AKA backend based on a triplet/quintuplet SQL database.])
+ARG_ENABL_SET([eap-simaka-pcsc],   [enable EAP-SIM/AKA backend based on a smartcard reader. Requires libpcsclite.])
+ARG_ENABL_SET([eap-simaka-sql],    [enable EAP-SIM/AKA backend based on a triplet/quintuplet SQL database.])
 ARG_ENABL_SET([eap-simaka-pseudonym], [enable EAP-SIM/AKA pseudonym storage plugin.])
 ARG_ENABL_SET([eap-simaka-reauth],    [enable EAP-SIM/AKA reauthentication data storage plugin.])
 ARG_ENABL_SET([eap-identity],   [enable EAP module providing EAP-Identity helper.])
@@ -1203,6 +1206,12 @@ if test x$eap_sim_pcsc = xtrue; then
 	AC_SUBST(pcsclite_LIBS)
 fi
 
+if test x$eap_simaka_pcsc = xtrue; then
+	PKG_CHECK_MODULES(pcsclite, [libpcsclite])
+	AC_SUBST(pcsclite_CFLAGS)
+	AC_SUBST(pcsclite_LIBS)
+fi
+
 if test x$nm = xtrue; then
 	PKG_CHECK_MODULES(nm, [gthread-2.0 libnm])
 	AC_SUBST(nm_CFLAGS)
@@ -1533,6 +1542,7 @@ ADD_PLUGIN([eap-sim-pcsc],         [c charon])
 ADD_PLUGIN([eap-aka],              [c charon])
 ADD_PLUGIN([eap-aka-3gpp],         [c charon])
 ADD_PLUGIN([eap-aka-3gpp2],        [c charon])
+ADD_PLUGIN([eap-simaka-pcsc],      [c charon])
 ADD_PLUGIN([eap-simaka-sql],       [c charon])
 ADD_PLUGIN([eap-simaka-pseudonym], [c charon])
 ADD_PLUGIN([eap-simaka-reauth],    [c charon])
@@ -1704,6 +1714,7 @@ AM_CONDITIONAL(USE_RADATTR, test x$radattr = xtrue)
 AM_CONDITIONAL(USE_EAP_SIM, test x$eap_sim = xtrue)
 AM_CONDITIONAL(USE_EAP_SIM_FILE, test x$eap_sim_file = xtrue)
 AM_CONDITIONAL(USE_EAP_SIM_PCSC, test x$eap_sim_pcsc = xtrue)
+AM_CONDITIONAL(USE_EAP_SIMAKA_PCSC, test x$eap_simaka_pcsc = xtrue)
 AM_CONDITIONAL(USE_EAP_SIMAKA_SQL, test x$eap_simaka_sql = xtrue)
 AM_CONDITIONAL(USE_EAP_SIMAKA_PSEUDONYM, test x$eap_simaka_pseudonym = xtrue)
 AM_CONDITIONAL(USE_EAP_SIMAKA_REAUTH, test x$eap_simaka_reauth = xtrue)
@@ -1996,6 +2007,7 @@ AC_CONFIG_FILES([
 	src/libcharon/plugins/eap_sim/Makefile
 	src/libcharon/plugins/eap_sim_file/Makefile
 	src/libcharon/plugins/eap_sim_pcsc/Makefile
+	src/libcharon/plugins/eap_simaka_pcsc/Makefile
 	src/libcharon/plugins/eap_simaka_sql/Makefile
 	src/libcharon/plugins/eap_simaka_pseudonym/Makefile
 	src/libcharon/plugins/eap_simaka_reauth/Makefile
