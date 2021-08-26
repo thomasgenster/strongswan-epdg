@@ -121,13 +121,18 @@ METHOD(simaka_manager_t, card_get_quintuplet, status_t,
 		switch (status)
 		{	/* try next on error, but not on INVALID_STATE */
 			case SUCCESS:
+	                        DBG1(DBG_LIB, "SUCCESS");
 			case INVALID_STATE:
+                                DBG1(DBG_LIB, "INVALID STATE");
 				enumerator->destroy(enumerator);
 				this->lock->unlock(this->lock);
 				return status;
 			case NOT_SUPPORTED:
+                                DBG1(DBG_LIB, "NOT_SUPPORTED");
 			case FAILED:
+                                DBG1(DBG_LIB, "FAILED");
 			default:
+                                DBG1(DBG_LIB, "DEFAULT");
 				tried++;
 				continue;
 		}
