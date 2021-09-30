@@ -16,6 +16,7 @@
 
 #include <library.h>
 #include <utils/debug.h>
+#include <collections/array.h>
 #include <threading/thread.h>
 #include <threading/mutex.h>
 #include <threading/thread_value.h>
@@ -27,6 +28,9 @@
 #include <openssl/crypto.h>
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
+#endif
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+#include <openssl/provider.h>
 #endif
 
 #include "openssl_plugin.h"
@@ -67,6 +71,13 @@ struct private_openssl_plugin_t {
 	 * public functions
 	 */
 	openssl_plugin_t public;
+
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+	/**
+	 * Loaded providers
+	 */
+	array_t *providers;
+#endif
 };
 
 /**
@@ -801,6 +812,15 @@ METHOD(plugin_t, get_features, int,
 METHOD(plugin_t, destroy, void,
 	private_openssl_plugin_t *this)
 {
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+	OSSL_PROVIDER *provider;
+	while (array_remove(this->providers, ARRAY_TAIL, &provider))
+	{
+		OSSL_PROVIDER_unload(provider);
+	}
+	array_destroy(this->providers);
+#endif /* OPENSSL_VERSION_NUMBER */
+
 /* OpenSSL 1.1.0 cleans up itself at exit and while OPENSSL_cleanup() exists we
  * can't call it as we couldn't re-initialize the library (as required by the
  * unit tests and the Android app) */
@@ -875,6 +895,19 @@ plugin_t *openssl_plugin_create()
 	ENGINE_load_builtin_engines();
 	ENGINE_register_all_complete();
 #endif /* OPENSSL_NO_ENGINE */
+#endif /* OPENSSL_VERSION_NUMBER */
+
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+	if (lib->settings->get_bool(lib->settings, "%s.plugins.openssl.load_legacy",
+								TRUE, lib->ns))
+	{
+		/* load the legacy provider for algorithms like MD4, DES, BF etc. */
+		array_insert_create(&this->providers, ARRAY_TAIL,
+							OSSL_PROVIDER_load(NULL, "legacy"));
+		/* explicitly load the default provider, as mentioned by crypto(7) */
+		array_insert_create(&this->providers, ARRAY_TAIL,
+							OSSL_PROVIDER_load(NULL, "default"));
+	}
 #endif /* OPENSSL_VERSION_NUMBER */
 
 #ifdef OPENSSL_FIPS
