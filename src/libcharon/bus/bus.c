@@ -949,6 +949,46 @@ METHOD(bus_t, ike_reestablish_post, void,
 	this->mutex->unlock(this->mutex);
 }
 
+METHOD(bus_t, eap_authorize, bool,
+	private_bus_t *this, identification_t *id, bool final)
+{
+	enumerator_t *enumerator;
+	ike_sa_t *ike_sa;
+	entry_t *entry;
+	bool keep, success = TRUE;
+
+	ike_sa = this->thread_sa->get(this->thread_sa);
+
+	this->mutex->lock(this->mutex);
+	enumerator = this->listeners->create_enumerator(this->listeners);
+	while (enumerator->enumerate(enumerator, &entry))
+	{
+		if (entry->calling || !entry->listener->eap_authorize)
+		{
+			continue;
+		}
+		entry->calling++;
+		keep = entry->listener->eap_authorize(entry->listener, ike_sa, id,
+										  final, &success);
+		entry->calling--;
+		if (!keep)
+		{
+			unregister_listener(this, entry, enumerator);
+		}
+		if (!success)
+		{
+			break;
+		}
+	}
+	enumerator->destroy(enumerator);
+	this->mutex->unlock(this->mutex);
+	if (!success)
+	{
+		alert(this, ALERT_EAP_AUTHORIZATION_FAILED);
+	}
+	return success;
+}
+
 METHOD(bus_t, authorize, bool,
 	private_bus_t *this, bool final)
 {
@@ -1154,6 +1194,7 @@ bus_t *bus_create()
 			.child_rekey = _child_rekey,
 			.children_migrate = _children_migrate,
 			.authorize = _authorize,
+			.eap_authorize = _eap_authorize,
 			.narrow = _narrow,
 			.assign_vips = _assign_vips,
 			.handle_vips = _handle_vips,

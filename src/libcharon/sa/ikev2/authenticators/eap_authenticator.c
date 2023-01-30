@@ -240,6 +240,32 @@ static void replace_eap_identity(private_eap_authenticator_t *this)
 	cfg->add(cfg, AUTH_RULE_EAP_IDENTITY, eap_identity);
 }
 
+static identification_t *get_identification(private_eap_authenticator_t *this)
+{
+	identification_t *id;
+	auth_cfg_t *auth = NULL;
+
+	if (this->eap_identity)
+	{
+		return this->eap_identity;
+	}
+
+	if (this->method->get_auth)
+	{
+		auth = this->method->get_auth(this->method);
+		if (auth)
+		{
+			id = auth->get(auth, AUTH_RULE_EAP_IDENTITY);
+			if (id)
+			{
+				return id;
+			}
+		}
+	}
+
+	return NULL;
+}
+
 /**
  * Handle EAP exchange as server
  */
@@ -320,6 +346,14 @@ static eap_payload_t* server_process_eap(private_eap_authenticator_t *this,
 				DBG1(DBG_IKE, "EAP method %N succeeded, %sMSK established",
 					 eap_type_names, type, this->msk.ptr ? "" : "no ");
 			}
+
+			if (!charon->bus->eap_authorize(charon->bus, get_identification(this), TRUE))
+			{
+				DBG1(DBG_IKE, "eap_authorization hook forbids EAP_SUCCESS, canceling");
+				this->eap_complete = FALSE;
+				return eap_payload_create_code(EAP_FAILURE, in->get_identifier(in));
+			}
+
 			this->ike_sa->set_condition(this->ike_sa, COND_EAP_AUTHENTICATED,
 										TRUE);
 			this->eap_complete = TRUE;

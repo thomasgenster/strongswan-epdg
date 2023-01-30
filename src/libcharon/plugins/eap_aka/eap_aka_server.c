@@ -116,6 +116,11 @@ struct private_eap_aka_server_t {
 	 * Did the client send a synchronize request?
 	 */
 	bool synchronized;
+
+	/**
+	 * Auth data contains porperty on EAP_SUCCESS.
+	 */
+	auth_cfg_t *auth;
 };
 
 /**
@@ -430,6 +435,8 @@ static status_t process_challenge(private_eap_aka_server_t *this,
 		DBG1(DBG_IKE, "received RES does not match XRES");
 		return FAILED;
 	}
+
+	this->auth->add(this->auth, AUTH_RULE_EAP_IDENTITY, this->permanent->clone(this->permanent));
 	return SUCCESS;
 }
 
@@ -643,6 +650,12 @@ METHOD(eap_method_t, get_type, eap_type_t,
 	return EAP_AKA;
 }
 
+METHOD(eap_method_t, get_auth, auth_cfg_t*,
+	private_eap_aka_server_t *this)
+{
+	return this->auth;
+}
+
 METHOD(eap_method_t, get_msk, status_t,
 	private_eap_aka_server_t *this, chunk_t *msk)
 {
@@ -677,6 +690,7 @@ METHOD(eap_method_t, destroy, void,
 {
 	this->crypto->destroy(this->crypto);
 	this->permanent->destroy(this->permanent);
+	this->auth->destroy(this->auth);
 	DESTROY_IF(this->pseudonym);
 	DESTROY_IF(this->reauth);
 	free(this->xres.ptr);
@@ -703,12 +717,14 @@ eap_aka_server_t *eap_aka_server_create(identification_t *server,
 				.get_type = _get_type,
 				.is_mutual = _is_mutual,
 				.get_msk = _get_msk,
+				.get_auth = _get_auth,
 				.get_identifier = _get_identifier,
 				.set_identifier = _set_identifier,
 				.destroy = _destroy,
 			},
 		},
 		.crypto = simaka_crypto_create(EAP_AKA),
+		.auth = auth_cfg_create(),
 		.mgr = lib->get(lib, "aka-manager"),
 	);
 

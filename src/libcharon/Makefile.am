@@ -467,6 +467,13 @@ if MONOLITHIC
 endif
 endif
 
+if USE_OSMO_EPDG
+  SUBDIRS += plugins/osmo_epdg
+if MONOLITHIC
+  libcharon_la_LIBADD += plugins/osmo_epdg/libstrongswan-osmo-epdg.la
+endif
+endif
+
 if USE_TLS
 if MONOLITHIC
   # otherwise this library is linked to eap_tls

@@ -239,6 +239,21 @@ struct listener_t {
 							 ike_sa_id_t *new, uint32_t unique);
 
 	/**
+	 * Hook called to invoke additional eap authorization rules.
+	 *
+	 * An eap authorization hook gets invoked only before sending the EAP_SUCCESS.
+	 *
+	 * @param ike_sa	IKE_SA to authorize
+	 * @param id		EAP identification
+	 * @param final		TRUE if this is the final hook invocation
+	 * @param success	set to TRUE to complete IKE_SA, FALSE abort
+	 * @return			TRUE to stay registered, FALSE to unregister
+	 */
+	bool (*eap_authorize)(listener_t *this, ike_sa_t *ike_sa,
+					  identification_t *id,
+					  bool final, bool *success);
+
+	/**
 	 * Hook called to invoke additional authorization rules.
 	 *
 	 * An authorization hook gets invoked several times: After each

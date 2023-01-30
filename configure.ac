@@ -212,6 +212,7 @@ ARG_ENABL_SET([eap-peap],       [enable EAP PEAP authentication module.])
 ARG_ENABL_SET([eap-tnc],        [enable EAP TNC trusted network connect module.])
 ARG_ENABL_SET([eap-dynamic],    [enable dynamic EAP proxy module.])
 ARG_ENABL_SET([eap-radius],     [enable RADIUS proxy authentication module.])
+ARG_ENABL_SET([osmo-epdg],      [enable osmo-epdg plugin.])
 ARG_ENABL_SET([ext-auth],       [enable plugin calling an external authorization script.])
 ARG_ENABL_SET([ipseckey],       [enable IPSECKEY authentication plugin.])
 ARG_ENABL_SET([keychain],       [enables OS X Keychain Services credential set.])
@@ -429,6 +430,11 @@ fi
 
 if test x$eap_aka_3gpp2 = xtrue; then
 	gmp=true;
+fi
+
+if test x$osmo_epdg = xtrue; then
+	simaka=true;
+	eap_aka=true;
 fi
 
 if test x$eap_aka = xtrue; then
@@ -1513,6 +1519,7 @@ ADD_PLUGIN([kernel-pfkey],         [c charon starter nm cmd])
 ADD_PLUGIN([kernel-pfroute],       [c charon starter nm cmd])
 ADD_PLUGIN([kernel-netlink],       [c charon starter nm cmd])
 ADD_PLUGIN([resolve],              [c charon cmd])
+ADD_PLUGIN([osmo-epdg],            [c charon])
 ADD_PLUGIN([save-keys],            [c])
 ADD_PLUGIN([socket-default],       [c charon nm cmd])
 ADD_PLUGIN([socket-dynamic],       [c charon cmd])
@@ -1720,6 +1727,7 @@ AM_CONDITIONAL(USE_EAP_PEAP, test x$eap_peap = xtrue)
 AM_CONDITIONAL(USE_EAP_TNC, test x$eap_tnc = xtrue)
 AM_CONDITIONAL(USE_EAP_DYNAMIC, test x$eap_dynamic = xtrue)
 AM_CONDITIONAL(USE_EAP_RADIUS, test x$eap_radius = xtrue)
+AM_CONDITIONAL(USE_OSMO_EPDG, test x$osmo_epdg = xtrue)
 AM_CONDITIONAL(USE_XAUTH_GENERIC, test x$xauth_generic = xtrue)
 AM_CONDITIONAL(USE_XAUTH_EAP, test x$xauth_eap = xtrue)
 AM_CONDITIONAL(USE_XAUTH_PAM, test x$xauth_pam = xtrue)
@@ -2005,6 +2013,7 @@ AC_CONFIG_FILES([
 	src/libcharon/plugins/eap_peap/Makefile
 	src/libcharon/plugins/eap_tnc/Makefile
 	src/libcharon/plugins/eap_radius/Makefile
+	src/libcharon/plugins/osmo_epdg/Makefile
 	src/libcharon/plugins/xauth_generic/Makefile
 	src/libcharon/plugins/xauth_eap/Makefile
 	src/libcharon/plugins/xauth_pam/Makefile

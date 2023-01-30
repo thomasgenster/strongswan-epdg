@@ -157,6 +157,8 @@ enum alert_t {
 	ALERT_CERT_EXCEEDED_PATH_LEN,
 	/** Certificate rejected; other policy violation, certificate_t */
 	ALERT_CERT_POLICY_VIOLATION,
+	/** an eap_authorize() hook failed, no argument */
+	ALERT_EAP_AUTHORIZATION_FAILED,
 };
 
 /**
@@ -331,6 +333,14 @@ struct bus_t {
 	 * @return			TRUE to establish IKE_SA, FALSE to send AUTH_FAILED
 	 */
 	bool (*authorize)(bus_t *this, bool final);
+
+	/**
+	 * EAP authorization hook.
+	 *
+	 * @param final		TRUE if this is the final invocation
+	 * @return			TRUE to establish IKE_SA, FALSE to send AUTH_FAILED
+	 */
+	bool (*eap_authorize)(bus_t *this, identification_t *id, bool final);
 
 	/**
 	 * CHILD_SA traffic selector narrowing hook.
