@@ -51,6 +51,20 @@ struct private_blocking_queue_t {
 
 };
 
+METHOD(blocking_queue_t, remove_, void*,
+	private_blocking_queue_t *this, void *item)
+{
+	int removed = 0;
+	this->mutex->lock(this->mutex);
+	removed = this->list->remove(this->list, item, NULL);
+	this->mutex->unlock(this->mutex);
+
+	if (removed)
+		return item;
+
+	return NULL;
+}
+
 METHOD(blocking_queue_t, enqueue, void,
 	private_blocking_queue_t *this, void *item)
 {
@@ -115,6 +129,7 @@ blocking_queue_t *blocking_queue_create()
 		.public = {
 			.enqueue = _enqueue,
 			.dequeue = _dequeue,
+			.remove = _remove_,
 			.destroy = _destroy,
 			.destroy_offset = _destroy_offset,
 			.destroy_function = _destroy_function,

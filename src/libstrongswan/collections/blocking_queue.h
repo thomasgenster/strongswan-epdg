@@ -50,6 +50,14 @@ struct blocking_queue_t {
 	void *(*dequeue)(blocking_queue_t *this);
 
 	/**
+	 * Removes a specific item from the queue.
+	 *
+	 * @param item      item to be removed from the queue
+	 * @return          item if item was on the queue. Otherwise NULL`
+	 */
+	void *(*remove)(blocking_queue_t *this, void *item);
+
+	/**
 	 * Destroys a blocking_queue_t object.
 	 *
 	 * @note No thread must wait in dequeue() when this function is called
