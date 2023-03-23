@@ -89,12 +89,34 @@ METHOD(listener_t, authorize, bool,
                 ike_sa->get_name(ike_sa),
 		final,
 		ike_sa->has_condition(ike_sa, COND_EAP_AUTHENTICATED));
-	
-	sleep(1);
-	if (final)
+
+	if (!final)
 	{
-		/* TODO: create new Tunnel and save Tunnel information locally */
+		return TRUE;
 	}
+
+	osmo_epdg_gsup_response_t *resp = this->gsup->tunnel_request(this->gsup, imsi, apn);
+	if (!resp)
+	{
+		DBG1(DBG_NET, "epdg: GSUP: couldn't send Tunnel Requeset.");
+		goto err;
+	}
+
+	if (resp->gsup.message_type == OSMO_GSUP_MSGT_EPDG_TUNNEL_ERROR)
+	{
+		DBG1(DBG_NET, "epdg_listener: Tunnel Error! Cause: %02x", resp->gsup.cause);
+		goto err;
+	}
+	else if (resp->gsup.message_type != OSMO_GSUP_MSGT_EPDG_TUNNEL_RESULT)
+	{
+		DBG1(DBG_NET, "epdg_listener: Tunnel unexpected message type: %02x", resp->gsup.message_type);
+		goto err;
+	}
+
+	return TRUE;
+err:
+	*success = FALSE;
+	/* keep still subscribed */
 	return TRUE;
 }
 

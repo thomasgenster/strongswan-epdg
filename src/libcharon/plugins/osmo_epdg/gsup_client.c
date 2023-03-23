@@ -194,6 +194,47 @@ static bool enqueue(private_osmo_epdg_gsup_client_t *this, gsup_request_t *req, 
 	return ret;
 }
 
+METHOD(osmo_epdg_gsup_client_t, tunnel_request, osmo_epdg_gsup_response_t*,
+        private_osmo_epdg_gsup_client_t *this, char *imsi, char *apn)
+{
+	struct osmo_gsup_message gsup_msg = {0};
+	struct msgb *msg;
+	bool timedout;
+
+	DBG1(DBG_NET, "Tunnel Request Request for %s", imsi);
+	gsup_msg.message_type = OSMO_GSUP_MSGT_EPDG_TUNNEL_REQUEST;
+	gsup_msg.current_rat_type = OSMO_RAT_EUTRAN_SGS;
+
+	if (!imsi || strlen(imsi) == 0)
+	{
+		/* TODO: inval imsi! */
+		return NULL;
+	}
+	strncpy(gsup_msg.imsi, imsi, sizeof(gsup_msg.imsi));
+
+	msg = encode_to_msgb(&gsup_msg);
+	if (!msg)
+	{
+		DBG1(DBG_NET, "Couldn't alloc/encode gsup message.");
+		return NULL;
+	}
+
+	/* TODO: add APN! */
+	gsup_request_t *req = gsup_request_create(OSMO_GSUP_MSGT_SEND_AUTH_INFO_REQUEST, msg);
+	osmo_epdg_gsup_response_t *resp = NULL;
+	timedout = enqueue(this, req, 5000);
+	if (timedout)
+	{
+		gsup_request_destroy(this, req);
+		return NULL;
+	}
+
+	resp = req->resp;
+	req->resp = NULL;
+	gsup_request_destroy(this, req);
+	return ret;
+}
+
 METHOD(osmo_epdg_gsup_client_t, send_auth_request, osmo_epdg_gsup_response_t*,
         private_osmo_epdg_gsup_client_t *this, char *imsi, uint8_t cn_domain, chunk_t *auts, chunk_t *auts_rand)
 {
@@ -489,6 +530,7 @@ osmo_epdg_gsup_client_t *osmo_epdg_gsup_client_create(char *uri)
 			.public = {
 				.send_auth_request = _send_auth_request,
 				.update_location = _update_location,
+				.tunnel_request = _tunnel_request,
 				.destroy = _destroy,
 			},
 			.uri = strdup(uri),

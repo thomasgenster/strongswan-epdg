@@ -17,6 +17,7 @@
  */
 
 #include <osmocom/core/msgb.h>
+#include <sa/ike_sa.h>
 #include <utils/chunk.h>
 #include <utils/identification.h>
 
@@ -25,3 +26,4 @@
 
 struct msgb *chunk_to_msgb(chunk_t *chunk);
 int get_imsi(identification_t *id, char *imsi, size_t imsi_len);
+int get_apn(ike_sa_t *sa, char *apn, size_t apn_len);
