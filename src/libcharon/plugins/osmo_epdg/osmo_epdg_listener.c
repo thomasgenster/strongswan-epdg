@@ -64,6 +64,8 @@ METHOD(listener_t, eap_authorize, bool,
 		goto err;
 	}
 
+	/* TODO: validate if this APN is allowed! */
+
 	if (resp->gsup.message_type != OSMO_GSUP_MSGT_UPDATE_LOCATION_RESULT)
 	{
 		DBG1(DBG_NET, "epdg_listener: Update Location Error! Cause: %02x", resp->gsup.cause);
