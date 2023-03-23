@@ -199,6 +199,7 @@ METHOD(osmo_epdg_gsup_client_t, send_auth_request, osmo_epdg_gsup_response_t*,
 {
 	struct osmo_gsup_message gsup_msg = {0};
 	struct msgb *msg;
+	bool timedout;
 
 	DBG1(DBG_NET, "Send Auth Request for %s", imsi);
 	gsup_msg.message_type = OSMO_GSUP_MSGT_SEND_AUTH_INFO_REQUEST;
@@ -255,8 +256,7 @@ METHOD(osmo_epdg_gsup_client_t, send_auth_request, osmo_epdg_gsup_response_t*,
 		DBG1(DBG_NET, "Couldn't alloc/encode gsup message.");
 		return NULL;
 	}
-	
-	bool timedout = FALSE;
+
 	gsup_request_t *req = gsup_request_create(OSMO_GSUP_MSGT_SEND_AUTH_INFO_REQUEST, msg);
 	osmo_epdg_gsup_response_t *resp = NULL;
 	timedout = enqueue(this, req, 5000);
@@ -278,6 +278,7 @@ METHOD(osmo_epdg_gsup_client_t, update_location, osmo_epdg_gsup_response_t *,
 {
 	struct osmo_gsup_message gsup_msg = {0};
 	struct msgb *msg;
+	bool timedout;
 
 	gsup_msg.message_type = OSMO_GSUP_MSGT_UPDATE_LOCATION_REQUEST;
 	gsup_msg.current_rat_type = OSMO_RAT_EUTRAN_SGS;
@@ -309,8 +310,7 @@ METHOD(osmo_epdg_gsup_client_t, update_location, osmo_epdg_gsup_response_t *,
 		DBG1(DBG_NET, "GSUP: ULR: Couldn't alloc/encode gsup message.");
 		return NULL;
 	}
-	
-	bool timedout = FALSE;
+
 	gsup_request_t *req = gsup_request_create(OSMO_GSUP_MSGT_UPDATE_LOCATION_REQUEST, msg);
 	osmo_epdg_gsup_response_t *resp = NULL;
 	timedout = enqueue(this, req, 5000);
