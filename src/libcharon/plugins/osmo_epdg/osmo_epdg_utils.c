@@ -19,6 +19,7 @@
 #include <errno.h>
 
 #include <osmocom/core/msgb.h>
+#include <sa/ike_sa.h>
 #include <utils/utils.h>
 #include <utils/debug.h>
 
@@ -62,4 +63,26 @@ int get_imsi(identification_t *id, char *imsi, size_t imsi_len)
 
 	strncpy(imsi, nai.ptr + 1, min(15, imsi_len));
 	return 0;
+}
+
+int get_apn(ike_sa_t *sa, char *apn, size_t apn_len)
+{
+	identification_t* apn_id;
+	chunk_t apn_chunk;
+
+	apn_id = sa->get_my_id(sa);
+	if (!apn_id)
+	{
+		return -EINVAL;
+	}
+
+	apn_chunk = apn_id->get_encoding(apn_id);
+	if (apn_chunk.len >= apn_len)
+	{
+		return -ENOMEM;
+	}
+
+	memcpy(apn, apn_chunk.ptr, apn_chunk.len);
+	apn[apn_chunk.len] = 0;
+	return -1;
 }
