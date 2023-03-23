@@ -84,6 +84,8 @@ METHOD(listener_t, authorize, bool,
 	private_osmo_epdg_listener_t *this, ike_sa_t *ike_sa,
 	bool final, bool *success)
 {
+	int ret;
+	char apn[APN_MAXLEN];
 	DBG1(DBG_NET, "Authorized: uniq 0x%08x, name %s final: %d, eap: %d!",
 		ike_sa->get_unique_id(ike_sa),
                 ike_sa->get_name(ike_sa),
@@ -95,10 +97,18 @@ METHOD(listener_t, authorize, bool,
 		return TRUE;
 	}
 
-	osmo_epdg_gsup_response_t *resp = this->gsup->tunnel_request(this->gsup, imsi, apn);
+	apn[0] = 0;
+	ret = get_apn(sa, apn, APN_MAXLEN);
+	if (!ret && ret != -EINVAL)
+	{
+		DBG1(DBG_NET, "epdg_listener: Tunnel Request: Couldn't get APN!");
+		goto err;
+	}
+
+	osmo_epdg_gsup_response_t *resp = this->gsup->tunnel_request(this->gsup, imsi, apn, strlen(apn));
 	if (!resp)
 	{
-		DBG1(DBG_NET, "epdg: GSUP: couldn't send Tunnel Requeset.");
+		DBG1(DBG_NET, "epdg_listener: Tunnel Request: GSUP: couldn't send.");
 		goto err;
 	}
 
@@ -109,7 +119,7 @@ METHOD(listener_t, authorize, bool,
 	}
 	else if (resp->gsup.message_type != OSMO_GSUP_MSGT_EPDG_TUNNEL_RESULT)
 	{
-		DBG1(DBG_NET, "epdg_listener: Tunnel unexpected message type: %02x", resp->gsup.message_type);
+		DBG1(DBG_NET, "epdg_listener: Tunnel Response: unexpected message type: %02x", resp->gsup.message_type);
 		goto err;
 	}
 

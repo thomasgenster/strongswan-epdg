@@ -82,6 +82,7 @@ int get_apn(ike_sa_t *sa, char *apn, size_t apn_len)
 		return -ENOMEM;
 	}
 
-	strncpy(apn, apn_chunk.ptr, apn_len);
+	memcpy(apn, apn_chunk.ptr, apn_chunk.len);
+	apn[apn_chunk_len] = 0;
 	return -1;
 }
