@@ -35,7 +35,25 @@ struct private_osmo_epdg_db_t {
 	 */
 	osmo_epdg_db_t public;
 
+	/**
+	 * GSUP client
+	 */
 	osmo_epdg_gsup_client_t *gsup;
+
+	/**
+	 * subscriber hash by ID
+	 */
+	hashtable_t *subscribers;
+
+	/**
+	 * subscriber hash by imsi (how to handle multiple?)
+	 */
+	hashtable_t *subscribers_imsi;
+
+	/**
+	 * subscriber by ike_sa
+	 */
+	hashtable_t *subscribers_ike_sa_t;
 };
 
 METHOD(osmo_epdg_db_t, create_subscriber_imsi, osmo_epdg_ue_t *,
@@ -57,8 +75,20 @@ METHOD(osmo_epdg_db_t, get_subscriber_id, osmo_epdg_ue_t *,
 	return NULL;
 }
 
+METHOD(osmo_epdg_db_t, get_subscriber_ike, osmo_epdg_ue_t *,
+	private_osmo_epdg_db_t *this, ike_sa_t *ike_sa)
+{
+	return NULL;
+}
+
 METHOD(osmo_epdg_db_t, destroy_subscriber_id, void,
 	private_osmo_epdg_db_t *this, uint32_t id)
+{
+	return NULL;
+}
+
+METHOD(osmo_epdg_db_t, destroy_subscriber_ike, void,
+	private_osmo_epdg_db_t *this, ike_sa_t *ike_sa)
 {
 	return NULL;
 }
@@ -84,10 +114,11 @@ osmo_epdg_db_t *osmo_epdg_db_create(osmo_epdg_gsup_client_t *gsup)
 
 	INIT(this,
 		.public = {
-			.create_subscriber_imsi = _create_subscriber_imsi,
-			.create_subscriber = _create_subscriber,
+			.create_subscriber = _create_subscriber_imsi,
 			.get_subscriber_id = _get_subscriber_id,
 			.get_subscriber_imsi = _get_subscriber_imsi,
+			.get_subscriber_ike = _get_subscriber_ike,
+			.destroy_subscriber_ike = _destroy_subscriber_ike,
 			.destroy_subscriber_id = _destroy_subscriber_id,
 			.destroy_subscriber = _destroy_subscriber,
 			.destroy = _destroy,

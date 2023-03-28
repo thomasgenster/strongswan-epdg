@@ -38,7 +38,7 @@ struct osmo_epdg_db_t {
 	/**
 	 * Create new subscriber by imsi, before sending authentication
 	 */
-	osmo_epdg_ue_t *(*create_subscriber_imsi)(osmo_epdg_db_t *this, ike_sa_t *ike_sa, char *imsi);
+	osmo_epdg_ue_t *(*create_subscriber)(osmo_epdg_db_t *this, ike_sa_t *ike_sa, char *imsi);
 
 	/**
 	 * Get subscriber by imsi, there might be multiple UE by this IMSI
@@ -46,9 +46,19 @@ struct osmo_epdg_db_t {
 	osmo_epdg_ue_t *(*get_subscriber_imsi)(osmo_epdg_db_t *this, char *imsi, int offset);
 
 	/**
+	 * Get subscriber by ike
+	 */
+	osmo_epdg_ue_t *(*get_subscriber_ike)(osmo_epdg_db_t *this, ike_sa_t *ike_sa);
+
+	/**
 	 * Get subscriber by id
 	 */
 	osmo_epdg_ue_t *(*get_subscriber_id)(osmo_epdg_db_t *this, uint32_t id);
+
+	/**
+	 * Destroy subscriber by imsi
+	 */
+	void (*destroy_subscriber_ike)(osmo_epdg_db_t *this, ike_sa_t *ike_sa);
 
 	/**
 	 * Destroy subscriber by imsi

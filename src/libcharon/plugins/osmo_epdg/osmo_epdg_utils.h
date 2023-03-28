@@ -35,6 +35,9 @@ enum ue_state state {
 	UE_WAIT_TUNNEL,
 	/* Everything ready, data can flow */
 	UE_CONNECTED,
+	/* Notify the osmo-epdg about destruction, wait for an answer */
+	UE_DISCONNECTING,
+	UE_DESTROYED,
 };
 
 /* TODO: how to clean up/garbage collect */
@@ -44,7 +47,9 @@ struct osmo_epdg_ue {
 	/* imsi should be uniq, need protected against fake UE */
 	char *imsi;
 	enum ue_state state;
+
 	/* TODO: missing strongswan session pointer */
+	ike_sa_t *ike_sa;
 };
 typedef struct osmo_epdg_ue osmo_epdg_ue_t;
 
