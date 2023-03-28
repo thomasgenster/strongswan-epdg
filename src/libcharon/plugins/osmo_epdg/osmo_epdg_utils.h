@@ -24,7 +24,7 @@
 
 #define IPA_ALLOC_SIZE 1200
 
-enum ue_state state {
+enum ue_state {
 	/* Initial */
 	UE_UNAUTHENTICATED,
 	/* Authenticated */
