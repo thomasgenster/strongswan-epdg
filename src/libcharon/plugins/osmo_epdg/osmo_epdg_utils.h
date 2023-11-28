@@ -16,6 +16,9 @@
  *
  */
 
+#ifndef OSMO_EPDG_UTILS_H_
+#define OSMO_EPDG_UTILS_H_
+
 #include <osmocom/core/msgb.h>
 #include <utils/chunk.h>
 #include <utils/identification.h>
@@ -25,3 +28,5 @@
 
 struct msgb *chunk_to_msgb(chunk_t *chunk);
 int get_imsi(identification_t *id, char *imsi, size_t imsi_len);
+
+#endif /* OSMO_EPDG_UTILS_H_ */
