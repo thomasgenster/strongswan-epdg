@@ -195,7 +195,7 @@ static bool enqueue(private_osmo_epdg_gsup_client_t *this, gsup_request_t *req, 
 }
 
 METHOD(osmo_epdg_gsup_client_t, tunnel_request, osmo_epdg_gsup_response_t*,
-        private_osmo_epdg_gsup_client_t *this, char *imsi, char *apn)
+        private_osmo_epdg_gsup_client_t *this, char *imsi)
 {
 	struct osmo_gsup_message gsup_msg = {0};
 	struct osmo_gsup_pdp_info *pdp;
@@ -211,16 +211,6 @@ METHOD(osmo_epdg_gsup_client_t, tunnel_request, osmo_epdg_gsup_response_t*,
 		return NULL;
 	}
 	strncpy(gsup_msg.imsi, imsi, sizeof(gsup_msg.imsi));
-
-	if (apn && strlen(apn) > 0)
-	{
-		gsup_msg.num_pdp_infos = 1;
-		pdp = &gsup_msg.pdp_infos[0];
-		pdp->context_id = 1;
-		pdp->have_info = 1;
-		pdp->apn_enc = apn;
-		pdp->apn_enc_len = strlen(apn);
-	}
 
 	msg = encode_to_msgb(&gsup_msg);
 	if (!msg)

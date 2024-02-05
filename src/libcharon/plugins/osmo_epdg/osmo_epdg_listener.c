@@ -123,7 +123,7 @@ METHOD(listener_t, authorize, bool,
 		goto err;
 	}
 
-	osmo_epdg_gsup_response_t *resp = this->gsup->tunnel_request(this->gsup, imsi, apn);
+	osmo_epdg_gsup_response_t *resp = this->gsup->tunnel_request(this->gsup, imsi);
 	if (!resp)
 	{
 		DBG1(DBG_NET, "epdg_listener: Tunnel Request: GSUP: couldn't send.");
