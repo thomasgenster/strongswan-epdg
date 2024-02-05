@@ -205,6 +205,7 @@ METHOD(osmo_epdg_gsup_client_t, tunnel_request, osmo_epdg_gsup_response_t*,
 	DBG1(DBG_NET, "Tunnel Request Request for %s", imsi);
 	gsup_msg.message_type = OSMO_GSUP_MSGT_EPDG_TUNNEL_REQUEST;
 	gsup_msg.current_rat_type = OSMO_RAT_EUTRAN_SGS;
+	gsup_msg.message_class = OSMO_GSUP_MESSAGE_CLASS_IPSEC_EPDG;
 	if (!imsi || strlen(imsi) == 0)
 	{
 		/* TODO: inval imsi! */
@@ -243,6 +244,7 @@ METHOD(osmo_epdg_gsup_client_t, send_auth_request, osmo_epdg_gsup_response_t*,
 
 	DBG1(DBG_NET, "Send Auth Request for %s", imsi);
 	gsup_msg.message_type = OSMO_GSUP_MSGT_SEND_AUTH_INFO_REQUEST;
+	gsup_msg.message_class = OSMO_GSUP_MESSAGE_CLASS_IPSEC_EPDG;
 	gsup_msg.num_auth_vectors = 1;
 	gsup_msg.current_rat_type = OSMO_RAT_EUTRAN_SGS;
 
@@ -321,6 +323,7 @@ METHOD(osmo_epdg_gsup_client_t, update_location, osmo_epdg_gsup_response_t *,
 	bool timedout;
 
 	gsup_msg.message_type = OSMO_GSUP_MSGT_UPDATE_LOCATION_REQUEST;
+	gsup_msg.message_class = OSMO_GSUP_MESSAGE_CLASS_IPSEC_EPDG;
 	gsup_msg.current_rat_type = OSMO_RAT_EUTRAN_SGS;
 
 	if (!imsi || strlen(imsi) == 0)
