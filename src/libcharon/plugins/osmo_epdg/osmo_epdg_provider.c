@@ -22,6 +22,8 @@
 
 #include <daemon.h>
 #include <credentials/keys/shared_key.h>
+#include <osmocom/gsm/apn.h>
+#include <osmocom/gsm/protocol/gsm_04_08_gprs.h>
 
 #define AKA_SQN_LEN		 6
 #define AKA_K_LEN		16
@@ -71,16 +73,31 @@ METHOD(simaka_provider_t, get_quintuplet, bool,
 	char rand[AKA_RAND_LEN], char xres[AKA_RES_MAX], int *xres_len,
 	char ck[AKA_CK_LEN], char ik[AKA_IK_LEN], char autn[AKA_AUTN_LEN])
 {
+	char apn[APN_MAXLEN];
 	char imsi[17] = {0};
+	ike_sa_t *ike_sa;
+
 	if (get_imsi(id, imsi, sizeof(imsi) - 1))
 	{
 		DBG1(DBG_NET, "epdg: get_quintuplet: Can't find IMSI in EAP identity.");
 		return FALSE;
 	}
-		
-	/* TODO: check before if this is a null terminated string */
+
+	ike_sa = charon->bus->get_sa(charon->bus);
+	if (!ike_sa)
+	{
+		DBG1(DBG_NET, "epdg: get_quintuplet: Can't get ike_sa.");
+		return FALSE;
+	}
+
+	if (get_apn(ike_sa, apn, APN_MAXLEN))
+	{
+		DBG1(DBG_NET, "epdg: get_quintuplet: Can't get APN.");
+		return FALSE;
+	}
+
 	osmo_epdg_gsup_response_t *resp = this->gsup->send_auth_request(
-			this->gsup, imsi, OSMO_GSUP_CN_DOMAIN_PS, NULL, NULL);
+			this->gsup, imsi, OSMO_GSUP_CN_DOMAIN_PS, NULL, NULL, apn, PDP_TYPE_N_IETF_IPv4);
 	if (!resp)
 	{
 		return FALSE;

@@ -27,6 +27,7 @@
 #include <threading/condvar.h>
 
 #include <osmocom/core/msgb.h>
+#include <osmocom/gsm/apn.h>
 #include <osmocom/gsm/gsup.h>
 #include <osmocom/gsm/protocol/ipaccess.h>
 
@@ -198,7 +199,6 @@ METHOD(osmo_epdg_gsup_client_t, tunnel_request, osmo_epdg_gsup_response_t*,
         private_osmo_epdg_gsup_client_t *this, char *imsi)
 {
 	struct osmo_gsup_message gsup_msg = {0};
-	struct osmo_gsup_pdp_info *pdp;
 	struct msgb *msg;
 	bool timedout;
 
@@ -236,11 +236,15 @@ METHOD(osmo_epdg_gsup_client_t, tunnel_request, osmo_epdg_gsup_response_t*,
 }
 
 METHOD(osmo_epdg_gsup_client_t, send_auth_request, osmo_epdg_gsup_response_t*,
-        private_osmo_epdg_gsup_client_t *this, char *imsi, uint8_t cn_domain, chunk_t *auts, chunk_t *auts_rand)
+        private_osmo_epdg_gsup_client_t *this, char *imsi, uint8_t cn_domain,
+	chunk_t *auts, chunk_t *auts_rand, char *apn, uint8_t pdp_type)
 {
 	struct osmo_gsup_message gsup_msg = {0};
 	struct msgb *msg;
 	bool timedout;
+	char apn_enc[APN_MAXLEN];
+	size_t apn_enc_len = 0;
+	int ret;
 
 	DBG1(DBG_NET, "Send Auth Request for %s", imsi);
 	gsup_msg.message_type = OSMO_GSUP_MSGT_SEND_AUTH_INFO_REQUEST;
@@ -254,6 +258,12 @@ METHOD(osmo_epdg_gsup_client_t, send_auth_request, osmo_epdg_gsup_response_t*,
 		return NULL;
 	}
 	strncpy(gsup_msg.imsi, imsi, sizeof(gsup_msg.imsi));
+
+	if (!apn || strlen(apn) == 0)
+	{
+		/* TODO: inval apn! */
+		return NULL;
+	}
 
 	switch (cn_domain)
 	{
@@ -291,6 +301,21 @@ METHOD(osmo_epdg_gsup_client_t, send_auth_request, osmo_epdg_gsup_response_t*,
 
 		gsup_msg.rand = auts_rand->ptr;
 	}
+
+	gsup_msg.pdp_infos[0].context_id = 0;
+	gsup_msg.pdp_infos[0].pdp_type_nr = pdp_type;
+	gsup_msg.pdp_infos[0].pdp_type_org = PDP_TYPE_ORG_IETF;
+
+	ret = osmo_apn_from_str(apn_enc, APN_MAXLEN, apn);
+	if (ret < 0)
+	{
+		DBG1(DBG_NET, "Couldn't encode APN %s!", apn);
+		return NULL;
+	}
+	apn_enc_len = ret;
+	gsup_msg.pdp_infos[0].apn_enc = apn_enc;
+	gsup_msg.pdp_infos[0].apn_enc_len = apn_enc_len;
+	gsup_msg.num_pdp_infos = 1;
 
 	msg = encode_to_msgb(&gsup_msg);
 	if (!msg)
