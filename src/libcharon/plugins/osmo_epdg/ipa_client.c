@@ -21,6 +21,7 @@
 #include <collections/enumerator.h>
 #include <collections/linked_list.h>
 #include <collections/blocking_queue.h>
+#include <processing/jobs/callback_job.h>
 #include <threading/mutex.h>
 #include <threading/thread.h>
 #include <threading/condvar.h>
@@ -36,6 +37,9 @@
 #include "ipa_client.h"
 #include "osmo_epdg_utils.h"
 
+#define INITIAL_BACKOFF_MS 10
+#define MAX_BACKOFF_MS 15000
+
 typedef struct private_osmo_epdg_ipa_client_t private_osmo_epdg_ipa_client_t;
 struct private_osmo_epdg_ipa_client_t {
 	/**
@@ -49,7 +53,14 @@ struct private_osmo_epdg_ipa_client_t {
 
 	ipa_cb_t osmo_cb;
 	void *osmo_cb_data;
+
+	mutex_t *mutex;
+	bool reconnecting;
+	uint32_t reconnect_backoff_ms;
+	uint32_t reconnect_backoff_max_ms;
 };
+
+static void reconnect_ipa(private_osmo_epdg_ipa_client_t *this);
 
 METHOD(osmo_epdg_ipa_client_t, on_error, int,
         private_osmo_epdg_ipa_client_t *this, uint8_t osmo_proto, ipa_cb_t cb, void *data)
@@ -80,7 +91,10 @@ METHOD(osmo_epdg_ipa_client_t, destroy, void,
 METHOD(osmo_epdg_ipa_client_t, disconnect, int,
         private_osmo_epdg_ipa_client_t *this)
 {
-	this->stream->destroy(this->stream);
+	if (this->stream)
+	{
+		this->stream->destroy(this->stream);
+	}
 	this->stream = NULL;
 	return 0;
 }
@@ -108,8 +122,8 @@ METHOD(osmo_epdg_ipa_client_t, send_pdu, ssize_t,
 
 static bool read_error(private_osmo_epdg_ipa_client_t *this, int read_err)
 {
-	DBG1(DBG_NET, "IPA client failed to read with %d. Disconnecting", read_err);
-	this->public.disconnect(&this->public);
+	DBG1(DBG_NET, "IPA client failed to read with %d. Reconnecting", read_err);
+	reconnect_ipa(this);
 	return FALSE;
 }
 
@@ -360,9 +374,8 @@ static int connect_ipa(private_osmo_epdg_ipa_client_t *this)
 	this->stream = lib->streams->connect(lib->streams, this->uri);
 	if (!this->stream)
 	{
-		/* TODO: failed to connect */
-		/* TODO: re-schedule the connect */
 		DBG1(DBG_NET, "failed to connect the ipa %s", this->uri);
+		reconnect_ipa(this);
 		return -EINVAL;
 	}
 	DBG1(DBG_NET, "IPA client connected");
@@ -375,7 +388,53 @@ static int connect_ipa(private_osmo_epdg_ipa_client_t *this)
 	this->stream->on_read(this->stream, on_stream_read, this);
 	on_stream_read(this, this->stream);
 
+	/* might want to move the reset of the backoff even later */
+	this->reconnect_backoff_ms = INITIAL_BACKOFF_MS;
+
 	return 0;
+}
+
+static job_requeue_t reconnect_job(private_osmo_epdg_ipa_client_t *this)
+{
+	DBG1(DBG_NET, "IPA: Reconnect job. %s %d", this->uri, this->reconnect_backoff_max_ms);
+	this->mutex->lock(this->mutex);
+
+	/* hopefully this doesn't lock too long */
+	if (connect_ipa(this))
+	{
+		this->reconnect_backoff_ms = this->reconnect_backoff_ms * 2;
+		if (this->reconnect_backoff_ms > this->reconnect_backoff_max_ms)
+		{
+			this->reconnect_backoff_ms = this->reconnect_backoff_max_ms;
+		}
+		DBG1(DBG_NET, "failed to re-connect the ipa %s. Reconnecting in %d ms", this->uri, this->reconnect_backoff_ms);
+		lib->scheduler->schedule_job_ms(lib->scheduler, (job_t*)
+						callback_job_create((callback_job_cb_t)reconnect_job,
+						this, NULL, NULL), this->reconnect_backoff_ms);
+		this->mutex->unlock(this->mutex);
+		return JOB_REQUEUE_NONE;
+	}
+
+	this->reconnecting = FALSE;
+	this->mutex->unlock(this->mutex);
+	return JOB_REQUEUE_NONE;
+}
+
+static void reconnect_ipa(private_osmo_epdg_ipa_client_t *this)
+{
+	DBG1(DBG_NET, "IPA: Reconnect_IPA. %s %d", this->uri, this->reconnect_backoff_max_ms);
+	this->mutex->lock(this->mutex);
+	if (this->reconnecting)
+	{
+		this->mutex->unlock(this->mutex);
+		return;
+	}
+
+	this->reconnecting = TRUE;
+	lib->scheduler->schedule_job_ms(lib->scheduler, (job_t*)
+					callback_job_create((callback_job_cb_t)reconnect_job,
+					this, NULL, NULL), this->reconnect_backoff_ms);
+	this->mutex->unlock(this->mutex);
 }
 
 osmo_epdg_ipa_client_t *osmo_epdg_ipa_client_create(char *uri)
@@ -392,7 +451,11 @@ osmo_epdg_ipa_client_t *osmo_epdg_ipa_client_create(char *uri)
 			},
 			.uri = strdup(uri),
 			.stream = NULL,
+			.mutex = mutex_create(MUTEX_TYPE_RECURSIVE),
+			.reconnect_backoff_max_ms = MAX_BACKOFF_MS,
+			.reconnect_backoff_ms = INITIAL_BACKOFF_MS,
 		);
+	
 	connect_ipa(this);
 	return &this->public;
 }
