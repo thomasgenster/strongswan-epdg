@@ -67,8 +67,6 @@ METHOD(listener_t, eap_authorize, bool,
 		goto err;
 	}
 
-	/* TODO: validate if this APN is allowed! */
-
 	if (resp->gsup.message_type != OSMO_GSUP_MSGT_UPDATE_LOCATION_RESULT)
 	{
 		DBG1(DBG_NET, "epdg_listener: Update Location Error! Cause: %02x", resp->gsup.cause);
@@ -89,7 +87,6 @@ METHOD(listener_t, authorize, bool,
 {
 	int ret;
 	identification_t* imsi_id;
-	char apn[APN_MAXLEN];
 	char imsi[16] = {0};
 	DBG1(DBG_NET, "Authorized: uniq 0x%08x, name %s final: %d, eap: %d!",
 		ike_sa->get_unique_id(ike_sa),
@@ -112,14 +109,6 @@ METHOD(listener_t, authorize, bool,
 	if (get_imsi(imsi_id, imsi, sizeof(imsi) - 1))
 	{
 		DBG1(DBG_NET, "epdg: authorize: Can't find IMSI in EAP identity.");
-		goto err;
-	}
-
-	apn[0] = 0;
-	ret = get_apn(ike_sa, apn, APN_MAXLEN);
-	if (!ret && ret != -EINVAL)
-	{
-		DBG1(DBG_NET, "epdg_listener: Tunnel Request: Couldn't get APN!");
 		goto err;
 	}
 
