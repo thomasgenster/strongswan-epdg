@@ -32,6 +32,7 @@
 #include <osmocom/gsm/protocol/ipaccess.h>
 
 #include <library.h>
+#include <errno.h>
 
 #include "ipa_client.h"
 #include "gsup_client.h"
@@ -195,8 +196,25 @@ static bool enqueue(private_osmo_epdg_gsup_client_t *this, gsup_request_t *req, 
 	return ret;
 }
 
+#define IMSI_LEN 15
+int imsi_copy(void *dest, const char *imsi)
+{
+	if (!imsi)
+	{
+		return -EINVAL;
+	}
+
+	if (strlen(imsi) != IMSI_LEN)
+	{
+		return -EINVAL;
+	}
+	memcpy(dest, imsi, IMSI_LEN);
+
+	return 0;
+}
+
 METHOD(osmo_epdg_gsup_client_t, tunnel_request, osmo_epdg_gsup_response_t*,
-        private_osmo_epdg_gsup_client_t *this, char *imsi)
+        private_osmo_epdg_gsup_client_t *this, const char *imsi)
 {
 	struct osmo_gsup_message gsup_msg = {0};
 	struct msgb *msg;
@@ -206,12 +224,11 @@ METHOD(osmo_epdg_gsup_client_t, tunnel_request, osmo_epdg_gsup_response_t*,
 	gsup_msg.message_type = OSMO_GSUP_MSGT_EPDG_TUNNEL_REQUEST;
 	gsup_msg.current_rat_type = OSMO_RAT_EUTRAN_SGS;
 	gsup_msg.message_class = OSMO_GSUP_MESSAGE_CLASS_IPSEC_EPDG;
-	if (!imsi || strlen(imsi) == 0)
+	if (imsi_copy(gsup_msg.imsi, imsi))
 	{
 		/* TODO: inval imsi! */
 		return NULL;
 	}
-	strncpy(gsup_msg.imsi, imsi, sizeof(gsup_msg.imsi));
 
 	msg = encode_to_msgb(&gsup_msg);
 	if (!msg)
@@ -236,8 +253,8 @@ METHOD(osmo_epdg_gsup_client_t, tunnel_request, osmo_epdg_gsup_response_t*,
 }
 
 METHOD(osmo_epdg_gsup_client_t, send_auth_request, osmo_epdg_gsup_response_t*,
-        private_osmo_epdg_gsup_client_t *this, char *imsi, uint8_t cn_domain,
-	chunk_t *auts, chunk_t *auts_rand, char *apn, uint8_t pdp_type)
+        private_osmo_epdg_gsup_client_t *this, const char *imsi, uint8_t cn_domain,
+	chunk_t *auts, chunk_t *auts_rand, const char *apn, uint8_t pdp_type)
 {
 	struct osmo_gsup_message gsup_msg = {0};
 	struct msgb *msg;
@@ -252,12 +269,11 @@ METHOD(osmo_epdg_gsup_client_t, send_auth_request, osmo_epdg_gsup_response_t*,
 	gsup_msg.num_auth_vectors = 1;
 	gsup_msg.current_rat_type = OSMO_RAT_EUTRAN_SGS;
 
-	if (!imsi || strlen(imsi) == 0)
+	if (imsi_copy(gsup_msg.imsi, imsi))
 	{
 		/* TODO: inval imsi! */
 		return NULL;
 	}
-	strncpy(gsup_msg.imsi, imsi, sizeof(gsup_msg.imsi));
 
 	if (!apn || strlen(apn) == 0)
 	{
@@ -341,7 +357,7 @@ METHOD(osmo_epdg_gsup_client_t, send_auth_request, osmo_epdg_gsup_response_t*,
 }
 
 METHOD(osmo_epdg_gsup_client_t, update_location, osmo_epdg_gsup_response_t *,
-        private_osmo_epdg_gsup_client_t *this, char *imsi, uint8_t cn_domain)
+        private_osmo_epdg_gsup_client_t *this, const char *imsi, uint8_t cn_domain)
 {
 	struct osmo_gsup_message gsup_msg = {0};
 	struct msgb *msg;
@@ -351,12 +367,11 @@ METHOD(osmo_epdg_gsup_client_t, update_location, osmo_epdg_gsup_response_t *,
 	gsup_msg.message_class = OSMO_GSUP_MESSAGE_CLASS_IPSEC_EPDG;
 	gsup_msg.current_rat_type = OSMO_RAT_EUTRAN_SGS;
 
-	if (!imsi || strlen(imsi) == 0)
+	if (imsi_copy(gsup_msg.imsi, imsi))
 	{
-		DBG1(DBG_NET, "GSUP: ULR: Invalid IMSI!");
+		/* TODO: inval imsi! */
 		return NULL;
 	}
-	strncpy(gsup_msg.imsi, imsi, sizeof(gsup_msg.imsi));
 
 	switch (cn_domain)
 	{
@@ -402,17 +417,17 @@ METHOD(osmo_epdg_gsup_client_t, destroy, void,
 	free(this);
 }
 
-void tx_insert_data_result(private_osmo_epdg_gsup_client_t *this, char *imsi, uint8_t cn_domain)
+void tx_insert_data_result(private_osmo_epdg_gsup_client_t *this, const char *imsi, uint8_t cn_domain)
 {
 	struct osmo_gsup_message gsup_msg = {0};
 	struct msgb *msg;
 
 	gsup_msg.message_type = OSMO_GSUP_MSGT_INSERT_DATA_RESULT;
-	if (!imsi || strlen(imsi) == 0)
+	if (imsi_copy(gsup_msg.imsi, imsi))
 	{
-		DBG1(DBG_NET, "GSUP: ULR: Invalid IMSI!");
+		/* TODO: inval imsi! */
+		return;
 	}
-	strncpy(gsup_msg.imsi, imsi, sizeof(gsup_msg.imsi));
 
 	switch (cn_domain)
 	{

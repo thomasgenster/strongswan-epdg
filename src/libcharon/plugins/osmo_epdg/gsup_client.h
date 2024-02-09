@@ -50,8 +50,8 @@ struct osmo_epdg_gsup_client_t {
 	 * @return		NULL or the osmo_epdg_gsup_response_t
 	 */
 	osmo_epdg_gsup_response_t *(*send_auth_request)(osmo_epdg_gsup_client_t *this,
-			char *imsi, uint8_t cn_domain, chunk_t *auts, chunk_t *auts_rand,
-			char *apn, uint8_t pdp_type);
+			const char *imsi, uint8_t cn_domain, chunk_t *auts, chunk_t *auts_rand,
+			const char *apn, uint8_t pdp_type);
 
 	/**
 	 * Update Location Request
@@ -59,7 +59,7 @@ struct osmo_epdg_gsup_client_t {
 	 * @return		NULL or the osmo_gsup_message
 	 */
 	osmo_epdg_gsup_response_t *(*update_location)(osmo_epdg_gsup_client_t *this,
-			char *imsi,
+			const char *imsi,
 			uint8_t cn_domain);
 
 	/**
@@ -68,7 +68,7 @@ struct osmo_epdg_gsup_client_t {
 	 * @return		NULL or the osmo_gsup_message
 	 */
 	osmo_epdg_gsup_response_t *(*tunnel_request)(osmo_epdg_gsup_client_t *this,
-			char *imsi);
+			const char *imsi);
 
 	/**
 	 * Destroy a osmo_epdg_gsup_client_t.
