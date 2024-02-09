@@ -263,7 +263,7 @@ METHOD(osmo_epdg_gsup_client_t, send_auth_request, osmo_epdg_gsup_response_t*,
 	size_t apn_enc_len = 0;
 	int ret;
 
-	DBG1(DBG_NET, "Send Auth Request for %s", imsi);
+	DBG1(DBG_NET, "GSUP: Send Auth Request for %s", imsi);
 	gsup_msg.message_type = OSMO_GSUP_MSGT_SEND_AUTH_INFO_REQUEST;
 	gsup_msg.message_class = OSMO_GSUP_MESSAGE_CLASS_IPSEC_EPDG;
 	gsup_msg.num_auth_vectors = 1;
@@ -272,12 +272,13 @@ METHOD(osmo_epdg_gsup_client_t, send_auth_request, osmo_epdg_gsup_response_t*,
 	if (imsi_copy(gsup_msg.imsi, imsi))
 	{
 		/* TODO: inval imsi! */
+		DBG1(DBG_NET, "GSUP: SAR: Invalid IMSI.");
 		return NULL;
 	}
 
 	if (!apn || strlen(apn) == 0)
 	{
-		/* TODO: inval apn! */
+		DBG1(DBG_NET, "GSUP: SAR: Invalid APN.");
 		return NULL;
 	}
 
@@ -291,7 +292,7 @@ METHOD(osmo_epdg_gsup_client_t, send_auth_request, osmo_epdg_gsup_response_t*,
 			gsup_msg.cn_domain = cn_domain;
 			break;
 		default:
-			DBG1(DBG_NET, "GSUP: SAIR: Ignoring invalid cn_domain message.");
+			DBG1(DBG_NET, "GSUP: SAR: Ignoring invalid cn_domain message.");
 			break;
 	}
 
@@ -325,7 +326,7 @@ METHOD(osmo_epdg_gsup_client_t, send_auth_request, osmo_epdg_gsup_response_t*,
 	ret = osmo_apn_from_str(apn_enc, APN_MAXLEN, apn);
 	if (ret < 0)
 	{
-		DBG1(DBG_NET, "Couldn't encode APN %s!", apn);
+		DBG1(DBG_NET, "GSUP: Couldn't encode APN %s!", apn);
 		return NULL;
 	}
 	apn_enc_len = ret;
@@ -336,7 +337,7 @@ METHOD(osmo_epdg_gsup_client_t, send_auth_request, osmo_epdg_gsup_response_t*,
 	msg = encode_to_msgb(&gsup_msg);
 	if (!msg)
 	{
-		DBG1(DBG_NET, "Couldn't alloc/encode gsup message.");
+		DBG1(DBG_NET, "GSUP: Couldn't alloc/encode gsup message.");
 		return NULL;
 	}
 
@@ -345,6 +346,7 @@ METHOD(osmo_epdg_gsup_client_t, send_auth_request, osmo_epdg_gsup_response_t*,
 	timedout = enqueue(this, req, 5000);
 	if (timedout)
 	{
+		DBG1(DBG_NET, "GSUP: Timeout request.");
 		gsup_request_destroy(this, req);
 		return NULL;
 	}

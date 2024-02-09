@@ -100,6 +100,7 @@ METHOD(simaka_provider_t, get_quintuplet, bool,
 			this->gsup, imsi, OSMO_GSUP_CN_DOMAIN_PS, NULL, NULL, apn, PDP_TYPE_N_IETF_IPv4);
 	if (!resp)
 	{
+		DBG1(DBG_NET, "epdg_provider: Failed to send auth request.");
 		return FALSE;
 	}
 
