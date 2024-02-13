@@ -27,6 +27,7 @@
 #define OSMO_EPDG_PROVIDER_H_
 
 #include <simaka_provider.h>
+#include <attributes/attribute_provider.h>
 #include "gsup_client.h"
 
 typedef struct osmo_epdg_provider_t osmo_epdg_provider_t;
@@ -40,6 +41,12 @@ struct osmo_epdg_provider_t {
 	 * Implements simaka_provider_t interface.
 	 */
 	simaka_provider_t simaka;
+
+
+	/**
+	 * Implements attribute_provider interface to assign config attributes and virtual ips.
+	 */
+	attribute_provider_t attribute;
 
 	/**
 	 * Destroy a osmo_epdg_provider_t.

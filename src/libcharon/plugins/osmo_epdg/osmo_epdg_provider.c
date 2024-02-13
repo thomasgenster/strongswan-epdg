@@ -138,6 +138,31 @@ METHOD(simaka_provider_t, resync, bool,
 	return FALSE;
 }
 
+METHOD(attribute_provider_t, acquire_address, host_t*,
+	private_osmo_epdg_provider_t *this, linked_list_t *pools, ike_sa_t *ike_sa,
+	host_t *requested)
+{
+	host_t *address = NULL;
+
+	address = host_create_from_string_and_family("10.45.0.1", AF_INET, 0);
+	return address;
+}
+
+METHOD(attribute_provider_t, release_address, bool,
+	private_osmo_epdg_provider_t *this, linked_list_t *pools, host_t *address,
+	ike_sa_t *ike_sa)
+{
+	return TRUE;
+}
+
+METHOD(attribute_provider_t, create_attribute_enumerator, enumerator_t*,
+	private_osmo_epdg_provider_t *this, linked_list_t *pools, ike_sa_t *ike_sa,
+	linked_list_t *vips)
+{
+	/* no additional attributes for this ike_sa */
+	return enumerator_create_empty();
+}
+
 METHOD(osmo_epdg_provider_t, destroy, void,
 	private_osmo_epdg_provider_t *this)
 {
@@ -153,6 +178,11 @@ osmo_epdg_provider_t *osmo_epdg_provider_create(osmo_epdg_gsup_client_t *gsup)
 
 	INIT(this,
 		.public = {
+			.attribute = {
+				.acquire_address = _acquire_address,
+				.release_address = _release_address,
+				.create_attribute_enumerator = _create_attribute_enumerator,
+			},
 			.simaka = {
 				.get_triplet = (void*)return_false,
 				.get_quintuplet = _get_quintuplet,
