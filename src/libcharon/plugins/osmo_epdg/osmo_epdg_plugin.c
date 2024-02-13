@@ -75,7 +75,7 @@ static bool register_functions(private_osmo_epdg_t *this,
  */
 static simaka_provider_t* get_provider(private_osmo_epdg_t *this)
 {
-	return &this->provider->provider;
+	return &this->provider->simaka;
 }
 
 METHOD(plugin_t, get_features, int,
