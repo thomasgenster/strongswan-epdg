@@ -153,7 +153,7 @@ osmo_epdg_provider_t *osmo_epdg_provider_create(osmo_epdg_gsup_client_t *gsup)
 
 	INIT(this,
 		.public = {
-			.provider = {
+			.simaka = {
 				.get_triplet = (void*)return_false,
 				.get_quintuplet = _get_quintuplet,
 				.resync = _resync,

@@ -39,7 +39,7 @@ struct osmo_epdg_provider_t {
 	/**
 	 * Implements simaka_provider_t interface.
 	 */
-	simaka_provider_t provider;
+	simaka_provider_t simaka;
 
 	/**
 	 * Destroy a osmo_epdg_provider_t.
