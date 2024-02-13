@@ -59,12 +59,14 @@ static bool register_functions(private_osmo_epdg_t *this,
 		this->provider = osmo_epdg_provider_create(gsup);
 		this->listener = osmo_epdg_listener_create(gsup);
 		charon->bus->add_listener(charon->bus, &this->listener->listener);
+		charon->attributes->add_provider(charon->attributes, &this->provider->attribute);
 		return TRUE;
 	}
 	if (this->listener)
 	{
 		charon->bus->remove_listener(charon->bus, &this->listener->listener);
 	}
+	charon->attributes->remove_provider(charon->attributes, &this->provider->attribute);
 	this->provider->destroy(this->provider);
 	this->provider = NULL;
 	return TRUE;
