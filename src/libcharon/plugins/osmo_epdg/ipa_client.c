@@ -109,6 +109,12 @@ METHOD(osmo_epdg_ipa_client_t, send_pdu, ssize_t,
 	head->len = htons(msgb_length(msg) - (sizeof(struct ipaccess_head)));
 	head->data[0] = osmo_proto;
 	len = msgb_length(msg);
+	if (!this->stream)
+	{
+		free(msg);
+		return -ENOENT;
+	}
+
 	if (!this->stream->write_all(this->stream, msgb_data(msg), msgb_length(msg)))
 	{
 		// TODO: write error
