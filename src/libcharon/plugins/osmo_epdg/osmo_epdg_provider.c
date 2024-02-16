@@ -154,7 +154,7 @@ METHOD(attribute_provider_t, acquire_address, host_t*,
 	host_t *requested)
 {
 	/* yes this hurts. We can either move the attribute provider out of this class or do some pointer arithmetic to get the right this object */
-	this = container_of(this, struct osmo_epdg_provider_t, attribute);
+	this = container_of((void *) this, private_osmo_epdg_provider_t, public.attribute);
 	osmo_epdg_ue_t *ue = this->db->get_subscriber_ike(this->db, ike_sa);
 	host_t *address = NULL;
 	/* TODO: check if we want to limit the pool here as well to "epdg" similar what dhcp does */
@@ -174,7 +174,7 @@ METHOD(attribute_provider_t, release_address, bool,
 	private_osmo_epdg_provider_t *this, linked_list_t *pools, host_t *address,
 	ike_sa_t *ike_sa)
 {
-	this = container_of(this, struct osmo_epdg_provider_t, attribute);
+	this = container_of((void *) this, private_osmo_epdg_provider_t, public.attribute);
 	osmo_epdg_ue_t *ue = this->db->get_subscriber_ike(this->db, ike_sa);
 	host_t *ue_address = ue->get_address(ue);
 	bool found = FALSE;
