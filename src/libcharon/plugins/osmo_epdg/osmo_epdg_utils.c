@@ -43,6 +43,17 @@ struct msgb *chunk_to_msgb(chunk_t *chunk)
 	return msg;
 }
 
+int get_imsi_ike(ike_sa_t *ike_sa, char *imsi, size_t imsi_len)
+{
+	identification_t *imsi_id = ike_sa->get_other_id(ike_sa);
+	if (!imsi_id)
+	{
+		return -1;
+	}
+
+	return get_imsi(imsi_id, imsi, imsi_len);
+}
+
 int get_imsi(identification_t *id, char *imsi, size_t imsi_len)
 {
 	chunk_t nai = id->get_encoding(id);
