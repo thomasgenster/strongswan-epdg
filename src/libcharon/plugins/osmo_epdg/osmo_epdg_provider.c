@@ -19,6 +19,8 @@
 #include "osmo_epdg_provider.h"
 #include "osmo_epdg_utils.h"
 #include "gsup_client.h"
+#include "osmo_epdg_db.h"
+#include "osmo_epdg_ue.h"
 
 #include <daemon.h>
 #include <credentials/keys/shared_key.h>
@@ -46,6 +48,8 @@ struct private_osmo_epdg_provider_t {
 	osmo_epdg_provider_t public;
 
 	osmo_epdg_gsup_client_t *gsup;
+
+	osmo_epdg_db_t *db;
 };
 
 /**
@@ -142,9 +146,18 @@ METHOD(attribute_provider_t, acquire_address, host_t*,
 	private_osmo_epdg_provider_t *this, linked_list_t *pools, ike_sa_t *ike_sa,
 	host_t *requested)
 {
+	osmo_epdg_ue_t *ue = this->db->get_subscriber_ike(this->db, ike_sa);
 	host_t *address = NULL;
+	/* TODO: check if we want to limit the pool here as well to "epdg" similar what dhcp does */
 
-	address = host_create_from_string_and_family("10.45.0.1", AF_INET, 0);
+	if (!ue)
+	{
+		DBG1(DBG_NET, "epdg_provider: acquire_address: Failed to get the UE by IKE");
+		return NULL;
+	}
+	address = ue->get_address(ue);
+	ue->put(ue);
+
 	return address;
 }
 
@@ -152,7 +165,21 @@ METHOD(attribute_provider_t, release_address, bool,
 	private_osmo_epdg_provider_t *this, linked_list_t *pools, host_t *address,
 	ike_sa_t *ike_sa)
 {
-	return TRUE;
+	osmo_epdg_ue_t *ue = this->db->get_subscriber_ike(this->db, ike_sa);
+	host_t *ue_address = ue->get_address(ue);
+	bool found = FALSE;
+
+	if (!ue)
+	{
+		DBG1(DBG_NET, "epdg_provider: release_address: Failed to get the UE by IKE");
+		return FALSE;
+	}
+
+	found = address->equals(address, ue_address);
+	ue_address->destroy(ue_address);
+	ue->put(ue);
+
+	return found;
 }
 
 METHOD(attribute_provider_t, create_attribute_enumerator, enumerator_t*,
@@ -172,7 +199,7 @@ METHOD(osmo_epdg_provider_t, destroy, void,
 /**
  * See header
  */
-osmo_epdg_provider_t *osmo_epdg_provider_create(osmo_epdg_gsup_client_t *gsup)
+osmo_epdg_provider_t *osmo_epdg_provider_create(osmo_epdg_db_t *db, osmo_epdg_gsup_client_t *gsup)
 {
 	private_osmo_epdg_provider_t *this;
 
@@ -194,6 +221,7 @@ osmo_epdg_provider_t *osmo_epdg_provider_create(osmo_epdg_gsup_client_t *gsup)
 			},
 			.destroy = _destroy,
 		},
+		.db = db,
 		.gsup = gsup,
 	);
 

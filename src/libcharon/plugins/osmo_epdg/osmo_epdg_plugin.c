@@ -40,8 +40,8 @@ struct private_osmo_epdg_t {
 	 * SIM AKA provider
 	 */
 	osmo_epdg_provider_t *provider;
-
 	osmo_epdg_listener_t *listener;
+	osmo_epdg_db_t *db;
 };
 
 METHOD(plugin_t, get_name, char*,
@@ -56,12 +56,14 @@ static bool register_functions(private_osmo_epdg_t *this,
 	if (reg)
 	{
 		osmo_epdg_gsup_client_t *gsup = osmo_epdg_gsup_client_create("tcp://127.0.0.1:4222");
-		this->provider = osmo_epdg_provider_create(gsup);
-		this->listener = osmo_epdg_listener_create(gsup);
+		this->db = osmo_epdg_db_create();
+		this->provider = osmo_epdg_provider_create(this->db, gsup);
+		this->listener = osmo_epdg_listener_create(this->db, gsup);
 		charon->bus->add_listener(charon->bus, &this->listener->listener);
 		charon->attributes->add_provider(charon->attributes, &this->provider->attribute);
 		return TRUE;
 	}
+
 	if (this->listener)
 	{
 		charon->bus->remove_listener(charon->bus, &this->listener->listener);
@@ -69,6 +71,10 @@ static bool register_functions(private_osmo_epdg_t *this,
 	charon->attributes->remove_provider(charon->attributes, &this->provider->attribute);
 	this->provider->destroy(this->provider);
 	this->provider = NULL;
+	this->listener->destroy(this->listener);
+	this->listener = NULL;
+	this->db->destroy(this->db);
+	this->db = NULL;
 	return TRUE;
 }
 

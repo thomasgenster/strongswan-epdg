@@ -27,6 +27,7 @@
 #define OSMO_EPDG_LISTENER_H_
 
 #include <bus/listeners/listener.h>
+#include "osmo_epdg_db.h"
 #include "gsup_client.h"
 
 typedef struct osmo_epdg_listener_t osmo_epdg_listener_t;
@@ -50,6 +51,6 @@ struct osmo_epdg_listener_t {
 /**
  * Create a osmo_epdg_listener instance.
  */
-osmo_epdg_listener_t *osmo_epdg_listener_create(osmo_epdg_gsup_client_t *gsup);
+osmo_epdg_listener_t *osmo_epdg_listener_create(osmo_epdg_db_t *db, osmo_epdg_gsup_client_t *gsup);
 
 #endif /** OSMO_EPDG_LISTENER_H_ @}*/

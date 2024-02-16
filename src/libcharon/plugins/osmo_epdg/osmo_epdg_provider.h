@@ -28,6 +28,7 @@
 
 #include <simaka_provider.h>
 #include <attributes/attribute_provider.h>
+#include "osmo_epdg_db.h"
 #include "gsup_client.h"
 
 typedef struct osmo_epdg_provider_t osmo_epdg_provider_t;
@@ -57,6 +58,6 @@ struct osmo_epdg_provider_t {
 /**
  * Create a osmo_epdg_provider instance.
  */
-osmo_epdg_provider_t *osmo_epdg_provider_create(osmo_epdg_gsup_client_t *gsup);
+osmo_epdg_provider_t *osmo_epdg_provider_create(osmo_epdg_db_t *db, osmo_epdg_gsup_client_t *gsup);
 
 #endif /** OSMO_EPDG_PROVIDER_H_ @}*/

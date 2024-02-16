@@ -27,6 +27,7 @@
 
 #include "osmo_epdg_plugin.h"
 #include "osmo_epdg_listener.h"
+#include "osmo_epdg_db.h"
 #include "osmo_epdg_utils.h"
 
 typedef struct private_osmo_epdg_listener_t private_osmo_epdg_listener_t;
@@ -39,8 +40,8 @@ struct private_osmo_epdg_listener_t {
 	 * Public osmo_epdg_listener_t interface.
 	 */
 	osmo_epdg_listener_t public;
-
 	osmo_epdg_gsup_client_t *gsup;
+	osmo_epdg_db_t *db;
 };
 
 METHOD(listener_t, eap_authorize, bool,
@@ -48,6 +49,7 @@ METHOD(listener_t, eap_authorize, bool,
 	identification_t *id, bool final, bool *success)
 {
 	char imsi[16] = {0};
+	osmo_epdg_ue_t *ue = NULL;
 
 	if (!id)
 	{
@@ -60,10 +62,18 @@ METHOD(listener_t, eap_authorize, bool,
 		goto err;
 	}
 
+	ue = this->db->create_subscriber(this->db, ike_sa);
+	if (!ue)
+	{
+		DBG1(DBG_NET, "epdg: authorize: Could not create subscriber via db! Rejecting.");
+		goto err;
+	}
+
 	osmo_epdg_gsup_response_t *resp = this->gsup->update_location(this->gsup, imsi, OSMO_GSUP_CN_DOMAIN_PS);
 	if (!resp)
 	{
 		DBG1(DBG_NET, "epdg: GSUP: couldn't send Update Location.");
+		this->db->remove_subscriber(this->db, imsi);
 		goto err;
 	}
 
@@ -72,11 +82,18 @@ METHOD(listener_t, eap_authorize, bool,
 		DBG1(DBG_NET, "epdg_listener: Update Location Error! Cause: %02x", resp->gsup.cause);
 		goto err;
 	}
-
+	ue->set_state(ue, UE_LOCATION_UPDATED);
+	ue->put(ue);
 	return TRUE;
 
 err:
 	*success = FALSE;
+	if (ue)
+	{
+		ue->set_state(ue, UE_FAIL);
+		ue->put(ue);
+	}
+
 	/* keep still subscribed */
 	return TRUE;
 }
@@ -88,6 +105,12 @@ METHOD(listener_t, authorize, bool,
 	int ret;
 	identification_t* imsi_id;
 	char imsi[16] = {0};
+	osmo_epdg_ue_t *ue = NULL;
+	host_t *address = NULL;
+	struct osmo_gsup_pdp_info *pdp_info;
+	osmo_epdg_gsup_response_t *resp = NULL;
+
+
 	DBG1(DBG_NET, "Authorized: uniq 0x%08x, name %s final: %d, eap: %d!",
 		ike_sa->get_unique_id(ike_sa),
                 ike_sa->get_name(ike_sa),
@@ -112,7 +135,14 @@ METHOD(listener_t, authorize, bool,
 		goto err;
 	}
 
-	osmo_epdg_gsup_response_t *resp = this->gsup->tunnel_request(this->gsup, imsi);
+	ue = this->db->get_subscriber(this->db, imsi);
+	if (!ue)
+	{
+		DBG1(DBG_NET, "epdg: authorize: Can't find match UE for imsi %s via EAP identity.", imsi);
+	}
+
+	ue->set_state(ue, UE_WAIT_TUNNEL);
+	resp = this->gsup->tunnel_request(this->gsup, imsi);
 	if (!resp)
 	{
 		DBG1(DBG_NET, "epdg_listener: Tunnel Request: GSUP: couldn't send.");
@@ -130,8 +160,53 @@ METHOD(listener_t, authorize, bool,
 		goto err;
 	}
 
+	/* validate Tunnel Response */
+	if ((resp->gsup.num_pdp_infos != 1) ||
+	    (!resp->gsup.pdp_infos[0].have_info) ||
+	    (resp->gsup.pdp_infos[0].pdp_type_org != PDP_TYPE_ORG_IETF) ||
+	    (resp->gsup.pdp_infos[0].pdp_type_nr != PDP_TYPE_N_IETF_IPv4))
+	{
+		DBG1(DBG_NET, "epdg_listener: Tunnel Response: IMSI %s: received incomplete message/wrong content", imsi);
+		goto err;
+	}
+
+	pdp_info = &resp->gsup.pdp_infos[0];
+	/* if the sa_family is set, the address is valid */
+	if (pdp_info->pdp_address[0].u.sa.sa_family != AF_INET)
+	{
+		DBG1(DBG_NET, "epdg_listener: Tunnel Response: IMSI %s: received wrong PDP info", imsi);
+		goto err;
+	}
+
+	address = host_create_from_sockaddr(&pdp_info->pdp_address[0].u.sa);
+	if (!address)
+	{
+		DBG1(DBG_NET, "epdg_listener: Tunnel Response: IMSI %s: couldn't convert PDP info to host_address", imsi);
+		goto err;
+	}
+
+	ue->set_address(ue, address);
+	ue->set_state(ue, UE_TUNNEL_READY);
+	ue->put(ue);
+
+	address->destroy(address);
+	free(resp);
 	return TRUE;
+
 err:
+
+	if (resp)
+	{
+		free(resp);
+	}
+
+	if (ue)
+	{
+		ue->set_state(ue, UE_FAIL);
+		ue->put(ue);
+	}
+	DESTROY_IF(address);
+
 	*success = FALSE;
 	/* keep still subscribed */
 	return TRUE;
@@ -146,7 +221,7 @@ METHOD(osmo_epdg_listener_t, destroy, void,
 /**
  * See header
  */
-osmo_epdg_listener_t *osmo_epdg_listener_create(osmo_epdg_gsup_client_t *gsup)
+osmo_epdg_listener_t *osmo_epdg_listener_create(osmo_epdg_db_t *db, osmo_epdg_gsup_client_t *gsup)
 {
 	private_osmo_epdg_listener_t *this;
 
@@ -159,6 +234,7 @@ osmo_epdg_listener_t *osmo_epdg_listener_create(osmo_epdg_gsup_client_t *gsup)
 			.destroy = _destroy,
 		},
 		.gsup = gsup,
+		.db = db,
 	);
 
 	return &this->public;
