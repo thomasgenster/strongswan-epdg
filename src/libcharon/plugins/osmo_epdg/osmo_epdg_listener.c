@@ -102,7 +102,6 @@ METHOD(listener_t, authorize, bool,
 	private_osmo_epdg_listener_t *this, ike_sa_t *ike_sa,
 	bool final, bool *success)
 {
-	int ret;
 	identification_t* imsi_id;
 	char imsi[16] = {0};
 	osmo_epdg_ue_t *ue = NULL;
