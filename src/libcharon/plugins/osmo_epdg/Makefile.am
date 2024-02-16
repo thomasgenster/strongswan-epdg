@@ -23,4 +23,5 @@ libstrongswan_osmo_epdg_la_SOURCES = \
 	gsup_client.h gsup_client.c \
 	ipa_client.h ipa_client.c \
 	osmo_epdg_utils.h osmo_epdg_utils.c \
+	osmo_epdg_ue.h osmo_epdg_ue.c \
 	osmo_epdg_db.h osmo_epdg_db.c

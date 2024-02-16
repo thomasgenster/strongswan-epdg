@@ -19,6 +19,7 @@
 #include <daemon.h>
 #include <plugins/plugin.h>
 #include <collections/hashtable.h>
+#include <threading/rwlock.h>
 #include <unistd.h>
 
 #include "osmo_epdg_plugin.h"
@@ -37,93 +38,125 @@ struct private_osmo_epdg_db_t {
 	osmo_epdg_db_t public;
 
 	/**
-	 * GSUP client
-	 */
-	osmo_epdg_gsup_client_t *gsup;
-
-	/**
-	 * subscriber hash by ID
-	 */
-	hashtable_t *subscribers;
-
-	/**
 	 * subscriber hash by imsi (how to handle multiple?)
 	 */
 	hashtable_t *subscribers_imsi;
 
 	/**
-	 * subscriber by ike_sa
+	 * rwlock to lock access for changes
 	 */
-	hashtable_t *subscribers_ike_sa_t;
+	rwlock_t *lock;
 };
 
-METHOD(osmo_epdg_db_t, create_subscriber_imsi, osmo_epdg_ue_t *,
-	private_osmo_epdg_db_t *this, ike_sa_t *ike_sa,
-	char *imsi)
+METHOD(osmo_epdg_db_t, create_subscriber, osmo_epdg_ue_t *,
+	private_osmo_epdg_db_t *this, ike_sa_t *ike_sa)
 {
-	return NULL;
+	osmo_epdg_ue_t *ue;
+	char imsi[16] = {0};
+	uint32_t unique = ike_sa->get_unique_id(ike_sa);
+
+	if (get_imsi_ike(ike_sa, imsi, sizeof(imsi) - 1))
+	{
+		return NULL;
+	}
+
+	this->lock->write_lock(this->lock);
+	ue = this->subscribers_imsi->get(this->subscribers_imsi, imsi);
+	if (ue)
+	{
+		/* TODO: handle dups! */
+		this->lock->unlock(this->lock);
+		return ue;
+	}
+
+	ue = osmo_epdg_ue_create(unique, imsi);
+	if (!ue)
+	{
+		DBG1(DBG_NET, "epdg_db: failed to create UE!");
+		this->lock->unlock(this->lock);
+		return NULL;
+	}
+
+	this->subscribers_imsi->put(this->subscribers_imsi, ue->get_imsi(ue), ue);
+
+	ue->get(ue);
+	this->lock->unlock(this->lock);
+	return ue;
 }
 
-METHOD(osmo_epdg_db_t, get_subscriber_imsi, osmo_epdg_ue_t *,
-	private_osmo_epdg_db_t *this, char *imsi, int offset)
+METHOD(osmo_epdg_db_t, get_subscriber, osmo_epdg_ue_t *,
+       private_osmo_epdg_db_t *this, char *imsi)
 {
-	return NULL;
-}
-
-METHOD(osmo_epdg_db_t, get_subscriber_id, osmo_epdg_ue_t *,
-	private_osmo_epdg_db_t *this, uint32_t id)
-{
-	return NULL;
+	osmo_epdg_ue_t *ue;
+	this->lock->read_lock(this->lock);
+	ue = this->subscribers_imsi->get(this->subscribers_imsi, imsi);
+	if (ue)
+	{
+		ue->get(ue);
+	}
+	this->lock->unlock(this->lock);
+	return ue;
 }
 
 METHOD(osmo_epdg_db_t, get_subscriber_ike, osmo_epdg_ue_t *,
-	private_osmo_epdg_db_t *this, ike_sa_t *ike_sa)
+       private_osmo_epdg_db_t *this, ike_sa_t *ike_sa)
 {
-	return NULL;
+	char imsi[16] = {0};
+
+	if (get_imsi_ike(ike_sa, imsi, sizeof(imsi)))
+	{
+		return NULL;
+	}
+
+	return this->public.get_subscriber(&this->public, imsi);
 }
 
-METHOD(osmo_epdg_db_t, destroy_subscriber_id, void,
-	private_osmo_epdg_db_t *this, uint32_t id)
+METHOD(osmo_epdg_db_t, remove_subscriber, void,
+	private_osmo_epdg_db_t *this, const char *imsi)
 {
-	return;
+	osmo_epdg_ue_t *ue;
+
+	this->lock->write_lock(this->lock);
+	ue = this->subscribers_imsi->remove(this->subscribers_imsi, imsi);
+	this->lock->unlock(this->lock);
+
+	if (ue)
+	{
+		ue->put(ue);
+	}
 }
 
-METHOD(osmo_epdg_db_t, destroy_subscriber_ike, void,
-	private_osmo_epdg_db_t *this, ike_sa_t *ike_sa)
+CALLBACK(destroy_ue, void,
+	osmo_epdg_ue_t *ue, const void *key)
 {
-	return;
-}
-
-METHOD(osmo_epdg_db_t, destroy_subscriber, void,
-	private_osmo_epdg_db_t *this, osmo_epdg_ue_t *ue)
-{
-	return;
+	ue->put(ue);
 }
 
 METHOD(osmo_epdg_db_t, destroy, void,
 	private_osmo_epdg_db_t *this)
 {
+	this->subscribers_imsi->destroy_function(this->subscribers_imsi, destroy_ue);
+	this->lock->destroy(this->lock);
 	free(this);
 }
 
 /**
  * See header
  */
-osmo_epdg_db_t *osmo_epdg_db_create(osmo_epdg_gsup_client_t *gsup)
+osmo_epdg_db_t *osmo_epdg_db_create()
 {
 	private_osmo_epdg_db_t *this;
 
 	INIT(this,
 		.public = {
-			.create_subscriber = _create_subscriber_imsi,
-			.get_subscriber_id = _get_subscriber_id,
-			.get_subscriber_imsi = _get_subscriber_imsi,
+			.create_subscriber = _create_subscriber,
+			.get_subscriber = _get_subscriber,
 			.get_subscriber_ike = _get_subscriber_ike,
-			.destroy_subscriber_ike = _destroy_subscriber_ike,
-			.destroy_subscriber_id = _destroy_subscriber_id,
-			.destroy_subscriber = _destroy_subscriber,
+			.remove_subscriber = _remove_subscriber,
 			.destroy = _destroy,
 		},
+                .subscribers_imsi = hashtable_create(hashtable_hash_str, hashtable_equals_str, 128),
+                .lock = rwlock_create(RWLOCK_TYPE_DEFAULT),
 	);
 
 	return &this->public;

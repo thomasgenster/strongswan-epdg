@@ -28,48 +28,37 @@
 
 #include <bus/listeners/listener.h>
 #include "gsup_client.h"
+#include "osmo_epdg_ue.h"
 #include "osmo_epdg_utils.h"
 
 typedef struct osmo_epdg_db_t osmo_epdg_db_t;
 
 /**
- * SIM listener implementation using a set of AKA functions.
+ * DB object to store state across different threads.
  */
 struct osmo_epdg_db_t {
 	/**
-	 * Create new subscriber by imsi, before sending authentication
+	 * Create new subscriber by imsi, before sending authentication.
+	 * NULL or UE object. The UE object need to called put() when not used.
 	 */
-	osmo_epdg_ue_t *(*create_subscriber)(osmo_epdg_db_t *this, ike_sa_t *ike_sa, char *imsi);
+	osmo_epdg_ue_t *(*create_subscriber)(osmo_epdg_db_t *this, ike_sa_t *ike_sa);
 
 	/**
 	 * Get subscriber by imsi, there might be multiple UE by this IMSI
+	 * NULL or UE object. The UE object need to called put() when not used.
 	 */
-	osmo_epdg_ue_t *(*get_subscriber_imsi)(osmo_epdg_db_t *this, char *imsi, int offset);
+	osmo_epdg_ue_t *(*get_subscriber)(osmo_epdg_db_t *this, char *imsi);
 
 	/**
-	 * Get subscriber by ike
+	 * Get subscriber by imsi via ike_sa, there might be multiple UE by this IMSI
+	 * NULL or UE object. The UE object need to called put() when not used.
 	 */
 	osmo_epdg_ue_t *(*get_subscriber_ike)(osmo_epdg_db_t *this, ike_sa_t *ike_sa);
 
 	/**
-	 * Get subscriber by id
+	 * Remove a subscriber from the db.
 	 */
-	osmo_epdg_ue_t *(*get_subscriber_id)(osmo_epdg_db_t *this, uint32_t id);
-
-	/**
-	 * Destroy subscriber by imsi
-	 */
-	void (*destroy_subscriber_ike)(osmo_epdg_db_t *this, ike_sa_t *ike_sa);
-
-	/**
-	 * Destroy subscriber by imsi
-	 */
-	void (*destroy_subscriber_id)(osmo_epdg_db_t *this, uint32_t id);
-
-	/**
-	 * Destroy subscriber by object
-	 */
-	void (*destroy_subscriber)(osmo_epdg_db_t *this, osmo_epdg_ue_t *ue);
+	void (*remove_subscriber)(osmo_epdg_db_t *this, char *imsi);
 
 	/**
 	 * Destroy a osmo_epdg_db_t.
@@ -80,6 +69,6 @@ struct osmo_epdg_db_t {
 /**
  * Create a osmo_epdg_db instance.
  */
-osmo_epdg_db_t *osmo_epdg_db_create(osmo_epdg_gsup_client_t *gsup);
+osmo_epdg_db_t *osmo_epdg_db_create();
 
 #endif /* OSMO_EPDG_DB_H_ */
