@@ -58,7 +58,7 @@ struct osmo_epdg_db_t {
 	/**
 	 * Remove a subscriber from the db.
 	 */
-	void (*remove_subscriber)(osmo_epdg_db_t *this, char *imsi);
+	void (*remove_subscriber)(osmo_epdg_db_t *this, const char *imsi);
 
 	/**
 	 * Destroy a osmo_epdg_db_t.
