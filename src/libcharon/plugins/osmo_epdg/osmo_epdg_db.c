@@ -61,12 +61,11 @@ METHOD(osmo_epdg_db_t, create_subscriber, osmo_epdg_ue_t *,
 	}
 
 	this->lock->write_lock(this->lock);
-	ue = this->subscribers_imsi->get(this->subscribers_imsi, imsi);
+	ue = this->subscribers_imsi->remove(this->subscribers_imsi, imsi);
 	if (ue)
 	{
-		/* TODO: handle dups! */
-		this->lock->unlock(this->lock);
-		return ue;
+		/* TODO: handle dups! Will remove it for now */
+		ue->put(ue);
 	}
 
 	ue = osmo_epdg_ue_create(unique, imsi);
