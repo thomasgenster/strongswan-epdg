@@ -211,6 +211,20 @@ err:
 	return TRUE;
 }
 
+METHOD(listener_t, ike_updown, bool,
+       private_osmo_epdg_listener_t *this, ike_sa_t *ike_sa, bool up)
+{
+	char imsi[16] = {0};
+	if (get_imsi_ike(ike_sa, imsi, sizeof(imsi)))
+	{
+		DBG1(DBG_NET, "epdg_listener: updown: imsi UNKNOWN: IKE_SA went %s", up ? "up" : "down");
+		return TRUE;
+	}
+	DBG1(DBG_NET, "epdg_listener: updown: imsi %s: IKE_SA went %s", imsi, up ? "up" : "down");
+
+	return TRUE;
+}
+
 METHOD(osmo_epdg_listener_t, destroy, void,
 	private_osmo_epdg_listener_t *this)
 {
@@ -229,6 +243,7 @@ osmo_epdg_listener_t *osmo_epdg_listener_create(osmo_epdg_db_t *db, osmo_epdg_gs
 			.listener = {
 				.authorize = _authorize,
 				.eap_authorize = _eap_authorize,
+				.ike_updown = _ike_updown,
 			},
 			.destroy = _destroy,
 		},
