@@ -140,6 +140,7 @@ METHOD(osmo_epdg_ue_t, destroy, void,
        private_osmo_epdg_ue_t *this)
 {
 	this->lock->destroy(this->lock);
+	free(this->imsi);
 	free(this);
 }
 
