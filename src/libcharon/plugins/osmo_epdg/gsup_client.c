@@ -497,6 +497,7 @@ static bool on_recv_pdu(void *data, osmo_epdg_ipa_client_t *client, struct msgb 
 				DBG1(DBG_NET, "GSUP: received non matching Result. Requested %s but received %s",
 					osmo_gsup_message_type_name(this->current_request->msg_type),
 					osmo_gsup_message_type_name(resp->gsup.message_type));
+				this->mutex->unlock(this->mutex);
 				goto out;
 			}
 			if (!this->current_request)
