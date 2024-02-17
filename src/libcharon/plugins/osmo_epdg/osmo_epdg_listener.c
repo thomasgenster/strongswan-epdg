@@ -25,7 +25,6 @@
 
 #include <osmocom/gsm/apn.h>
 
-#include "osmo_epdg_plugin.h"
 #include "osmo_epdg_listener.h"
 #include "osmo_epdg_db.h"
 #include "osmo_epdg_utils.h"
