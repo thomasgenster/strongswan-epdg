@@ -50,6 +50,7 @@ METHOD(listener_t, eap_authorize, bool,
 {
 	char imsi[16] = {0};
 	osmo_epdg_ue_t *ue = NULL;
+	osmo_epdg_gsup_response_t *resp = NULL;
 
 	if (!id)
 	{
@@ -69,7 +70,7 @@ METHOD(listener_t, eap_authorize, bool,
 		goto err;
 	}
 
-	osmo_epdg_gsup_response_t *resp = this->gsup->update_location(this->gsup, imsi, OSMO_GSUP_CN_DOMAIN_PS);
+	resp = this->gsup->update_location(this->gsup, imsi, OSMO_GSUP_CN_DOMAIN_PS);
 	if (!resp)
 	{
 		DBG1(DBG_NET, "epdg: GSUP: couldn't send Update Location.");
@@ -84,6 +85,7 @@ METHOD(listener_t, eap_authorize, bool,
 	}
 	ue->set_state(ue, UE_LOCATION_UPDATED);
 	ue->put(ue);
+	free(resp);
 	return TRUE;
 
 err:
@@ -94,6 +96,10 @@ err:
 		ue->put(ue);
 	}
 
+	if (resp)
+	{
+		free(resp);
+	}
 	/* keep still subscribed */
 	return TRUE;
 }
