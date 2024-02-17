@@ -77,8 +77,8 @@ METHOD(osmo_epdg_db_t, create_subscriber, osmo_epdg_ue_t *,
 		return NULL;
 	}
 
+	/* UE comes with refcount = 1 */
 	this->subscribers_imsi->put(this->subscribers_imsi, ue->get_imsi(ue), ue);
-
 	ue->get(ue);
 	this->lock->unlock(this->lock);
 	return ue;

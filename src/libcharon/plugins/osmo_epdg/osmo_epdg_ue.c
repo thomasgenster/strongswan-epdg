@@ -162,8 +162,8 @@ osmo_epdg_ue_t *osmo_epdg_ue_create(uint32_t id, char *imsi)
 	     .id = id,
 	     .lock = rwlock_create(RWLOCK_TYPE_DEFAULT),
 	     .state = UE_WAIT_LOCATION_UPDATE,
+	     .refcount = 1,
 	     );
-	ref_get(&this->refcount);
 
 	return &this->public;
 }
