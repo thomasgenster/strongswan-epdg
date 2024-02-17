@@ -143,6 +143,7 @@ METHOD(listener_t, authorize, bool,
 	if (!ue)
 	{
 		DBG1(DBG_NET, "epdg: authorize: Can't find match UE for imsi %s via EAP identity.", imsi);
+		goto err;
 	}
 
 	ue->set_state(ue, UE_WAIT_TUNNEL);
