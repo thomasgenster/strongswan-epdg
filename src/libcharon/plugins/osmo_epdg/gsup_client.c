@@ -491,6 +491,12 @@ static bool on_recv_pdu(void *data, osmo_epdg_ipa_client_t *client, struct msgb 
 		case OSMO_GSUP_MSGT_EPDG_TUNNEL_ERROR:
 		case OSMO_GSUP_MSGT_EPDG_TUNNEL_RESULT:
 			this->mutex->lock(this->mutex);
+			if (!this->current_request)
+			{
+				/* a timeout happened and current_request is NULL */
+				this->mutex->unlock(this->mutex);
+				goto out;
+			}
 			if ((this->current_request->msg_type & 0xfffffffc) != (resp->gsup.message_type & 0xfffffffc))
 			{
 				/* Request, Result, Error, Other are encoded in the last 2 bits */
