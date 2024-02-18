@@ -17,6 +17,7 @@
  */
 
 #include <errno.h>
+#include <ctype.h>
 
 #include <osmocom/core/msgb.h>
 #include <sa/ike_sa.h>
@@ -73,6 +74,37 @@ int get_imsi(identification_t *id, char *imsi, size_t imsi_len)
 	}
 
 	strncpy(imsi, nai.ptr + 1, min(15, imsi_len));
+	return 0;
+}
+
+int validate_imsi(const char *imsi)
+{
+	if (!imsi)
+		return 1;
+
+	if (strlen(imsi) != 15)
+		return 1;
+
+	for (int i=0; i<strlen(imsi); i++)
+	{
+		if (!isdigit(imsi[i]))
+		{
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
+int validate_apn(const char *apn)
+{
+	/* don't support empty apn */
+	if (!apn)
+		return 1;
+
+	if (!strlen(apn))
+		return 1;
+
 	return 0;
 }
 
