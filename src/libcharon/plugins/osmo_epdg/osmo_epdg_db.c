@@ -119,6 +119,34 @@ METHOD(osmo_epdg_db_t, get_subscriber_ike, osmo_epdg_ue_t *,
 	return this->public.get_subscriber(&this->public, imsi);
 }
 
+METHOD(osmo_epdg_db_t, get_subscriber_id, osmo_epdg_ue_t *,
+       private_osmo_epdg_db_t *this, uint32_t unique_id)
+{
+	/* This could be optimize, but keep it is for now */
+	osmo_epdg_ue_t *ue = NULL;
+	enumerator_t *enumerator;
+
+	this->lock->read_lock(this->lock);
+	enumerator = this->subscribers_imsi->create_enumerator(this->subscribers_imsi);
+	while (enumerator->enumerate(enumerator, NULL, ue))
+	{
+		if (!ue)
+		{
+			continue;
+		}
+		if (ue->get_id(ue) == unique_id)
+		{
+			ue->get(ue);
+			goto out;
+		}
+	}
+	ue = NULL;
+out:
+	this->lock->unlock(this->lock);
+	enumerator->destroy(enumerator);
+	return ue;
+}
+
 METHOD(osmo_epdg_db_t, remove_subscriber, void,
 	private_osmo_epdg_db_t *this, const char *imsi)
 {
@@ -160,6 +188,7 @@ osmo_epdg_db_t *osmo_epdg_db_create()
 			.create_subscriber = _create_subscriber,
 			.get_subscriber = _get_subscriber,
 			.get_subscriber_ike = _get_subscriber_ike,
+			.get_subscriber_id = _get_subscriber_id,
 			.remove_subscriber = _remove_subscriber,
 			.destroy = _destroy,
 		},

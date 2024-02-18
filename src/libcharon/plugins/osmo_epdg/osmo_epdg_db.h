@@ -56,6 +56,12 @@ struct osmo_epdg_db_t {
 	osmo_epdg_ue_t *(*get_subscriber_ike)(osmo_epdg_db_t *this, ike_sa_t *ike_sa);
 
 	/**
+	 * Get subscriber by unique id.
+	 * NULL or UE object. The UE object need to called put() when not used.
+	 */
+	osmo_epdg_ue_t *(*get_subscriber_id)(osmo_epdg_db_t *this, uint32_t unique_id);
+
+	/**
 	 * Remove a subscriber from the db.
 	 */
 	void (*remove_subscriber)(osmo_epdg_db_t *this, const char *imsi);
