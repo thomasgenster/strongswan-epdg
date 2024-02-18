@@ -100,33 +100,33 @@ static gsup_request_t *gsup_request_create(enum osmo_gsup_message_type msg_type,
 	return req;
 }
 
-static void gsup_request_destroy(private_osmo_epdg_gsup_client_t *this, gsup_request_t *req)
+static void gsup_request_destroy(gsup_request_t *this)
 {
-	if (!req)
+	if (!this)
 	{
 		return;
 	}
 
-	if (req->mutex)
+	if (this->mutex)
 	{
-		req->mutex->destroy(req->mutex);
+		this->mutex->destroy(this->mutex);
 	}
 
-	if (req->condvar)
+	if (this->condvar)
 	{
-		req->condvar->destroy(req->condvar);
+		this->condvar->destroy(this->condvar);
 	}
 
-	if (req->msg)
+	if (this->msg)
 	{
-		free(req->msg);
+		free(this->msg);
 	}
 
-	if (req->resp)
+	if (this->resp)
 	{
-		free(req->resp);
+		free(this->resp);
 	}
-	free(req);
+	free(this);
 }
 
 static struct msgb *encode_to_msgb(struct osmo_gsup_message *gsup_msg)
@@ -242,13 +242,13 @@ METHOD(osmo_epdg_gsup_client_t, tunnel_request, osmo_epdg_gsup_response_t*,
 	timedout = enqueue(this, req, 5000);
 	if (timedout)
 	{
-		gsup_request_destroy(this, req);
+		gsup_request_destroy(req);
 		return NULL;
 	}
 
 	resp = req->resp;
 	req->resp = NULL;
-	gsup_request_destroy(this, req);
+	gsup_request_destroy(req);
 	return resp;
 }
 
@@ -347,13 +347,13 @@ METHOD(osmo_epdg_gsup_client_t, send_auth_request, osmo_epdg_gsup_response_t*,
 	if (timedout)
 	{
 		DBG1(DBG_NET, "epdg: gsupc: Timeout request.");
-		gsup_request_destroy(this, req);
+		gsup_request_destroy(req);
 		return NULL;
 	}
 
 	resp = req->resp;
 	req->resp = NULL;
-	gsup_request_destroy(this, req);
+	gsup_request_destroy(req);
 
 	return resp;
 }
@@ -401,13 +401,13 @@ METHOD(osmo_epdg_gsup_client_t, update_location, osmo_epdg_gsup_response_t *,
 	timedout = enqueue(this, req, 5000);
 	if (timedout)
 	{
-		gsup_request_destroy(this, req);
+		gsup_request_destroy(req);
 		return NULL;
 	}
 
 	resp = req->resp;
 	req->resp = NULL;
-	gsup_request_destroy(this, req);
+	gsup_request_destroy(req);
 
 	return resp;
 }
