@@ -200,7 +200,7 @@ static void ipa_pdu_base_send_id_resp(private_osmo_epdg_ipa_client_t *this, stru
 		return;
 	}
 	
-	resp = chunk_to_msgb(&resp_pdu);
+	resp = epdg_chunk_to_msgb(&resp_pdu);
 
 	/* remove the ipaccess header so we can use msg_pull on the message */
 	msgb_pull(req, sizeof(struct ipaccess_head));
@@ -325,7 +325,7 @@ CALLBACK(on_stream_read, bool,
 		/* TODO: -ENOMEM; */
 		return FALSE;
 	}
-	req = chunk_to_msgb(&req_chunk);
+	req = epdg_chunk_to_msgb(&req_chunk);
 	memcpy(msgb_put(req, sizeof(head)), &head, sizeof(head));
 	/* TODO: either wait here with a timeout or don't care on this stream read */
 	if (!stream->read_all(stream, msgb_put(req, len), len))

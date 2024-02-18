@@ -26,12 +26,12 @@
 
 #define IPA_ALLOC_SIZE 1200
 
-struct msgb *chunk_to_msgb(chunk_t *chunk);
-int get_imsi(identification_t *id, char *imsi, size_t imsi_len);
-int get_imsi_ike(ike_sa_t *ike_sa, char *imsi, size_t imsi_len);
-int validate_imsi(const char *imsi);
+struct msgb *epdg_chunk_to_msgb(chunk_t *chunk);
+int epdg_get_imsi(identification_t *id, char *imsi, size_t imsi_len);
+int epdg_get_imsi_ike(ike_sa_t *ike_sa, char *imsi, size_t imsi_len);
+int epdg_validate_imsi(const char *imsi);
 
-int get_apn(ike_sa_t *sa, char *apn, size_t apn_len);
-int validate_apn(const char *apn);
+int epdg_get_apn(ike_sa_t *sa, char *apn, size_t apn_len);
+int epdg_validate_apn(const char *apn);
 
 #endif /* OSMO_EPDG_UTILS_H_ */

@@ -56,7 +56,7 @@ METHOD(listener_t, eap_authorize, bool,
 		DBG1(DBG_NET, "epdg: authorize: no id given. Failing.");
 		goto err;
 	}
-	if (get_imsi(id, imsi, sizeof(imsi) - 1))
+	if (epdg_get_imsi(id, imsi, sizeof(imsi) - 1))
 	{
 		DBG1(DBG_NET, "epdg: authorize: Can't find IMSI in EAP identity.");
 		goto err;
@@ -133,7 +133,7 @@ METHOD(listener_t, authorize, bool,
 		goto err;
 	}
 
-	if (get_imsi(imsi_id, imsi, sizeof(imsi) - 1))
+	if (epdg_get_imsi(imsi_id, imsi, sizeof(imsi) - 1))
 	{
 		DBG1(DBG_NET, "epdg: authorize: Can't find IMSI in EAP identity.");
 		goto err;
@@ -221,7 +221,7 @@ METHOD(listener_t, ike_updown, bool,
        private_osmo_epdg_listener_t *this, ike_sa_t *ike_sa, bool up)
 {
 	char imsi[16] = {0};
-	if (get_imsi_ike(ike_sa, imsi, sizeof(imsi)))
+	if (epdg_get_imsi_ike(ike_sa, imsi, sizeof(imsi)))
 	{
 		DBG1(DBG_NET, "epdg_listener: updown: imsi UNKNOWN: IKE_SA went %s", up ? "up" : "down");
 		return TRUE;

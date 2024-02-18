@@ -81,7 +81,7 @@ METHOD(simaka_provider_t, get_quintuplet, bool,
 	char imsi[17] = {0};
 	ike_sa_t *ike_sa;
 
-	if (get_imsi(id, imsi, sizeof(imsi) - 1))
+	if (epdg_get_imsi(id, imsi, sizeof(imsi) - 1))
 	{
 		DBG1(DBG_NET, "epdg: get_quintuplet: Can't find IMSI in EAP identity.");
 		return FALSE;
@@ -94,7 +94,7 @@ METHOD(simaka_provider_t, get_quintuplet, bool,
 		return FALSE;
 	}
 
-	if (get_apn(ike_sa, apn, APN_MAXLEN))
+	if (epdg_get_apn(ike_sa, apn, APN_MAXLEN))
 	{
 		DBG1(DBG_NET, "epdg: get_quintuplet: Can't get APN.");
 		return FALSE;

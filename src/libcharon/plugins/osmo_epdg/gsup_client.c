@@ -141,7 +141,7 @@ static struct msgb *encode_to_msgb(struct osmo_gsup_message *gsup_msg)
 		return NULL;
 	}
 
-	msg = chunk_to_msgb(&msg_chunk);
+	msg = epdg_chunk_to_msgb(&msg_chunk);
 	if (!msg)
 	{
 		goto free_msg;

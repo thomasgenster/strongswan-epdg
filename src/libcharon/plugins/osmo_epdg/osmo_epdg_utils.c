@@ -26,7 +26,7 @@
 
 #include "osmo_epdg_utils.h"
 
-struct msgb *chunk_to_msgb(chunk_t *chunk)
+struct msgb *epdg_chunk_to_msgb(chunk_t *chunk)
 {
 	struct msgb *msg;
 	if (chunk->len < sizeof(*msg))
@@ -44,7 +44,7 @@ struct msgb *chunk_to_msgb(chunk_t *chunk)
 	return msg;
 }
 
-int get_imsi_ike(ike_sa_t *ike_sa, char *imsi, size_t imsi_len)
+int epdg_get_imsi_ike(ike_sa_t *ike_sa, char *imsi, size_t imsi_len)
 {
 	identification_t *imsi_id = ike_sa->get_other_id(ike_sa);
 	if (!imsi_id)
@@ -52,10 +52,10 @@ int get_imsi_ike(ike_sa_t *ike_sa, char *imsi, size_t imsi_len)
 		return -1;
 	}
 
-	return get_imsi(imsi_id, imsi, imsi_len);
+	return epdg_get_imsi(imsi_id, imsi, imsi_len);
 }
 
-int get_imsi(identification_t *id, char *imsi, size_t imsi_len)
+int epdg_get_imsi(identification_t *id, char *imsi, size_t imsi_len)
 {
 	chunk_t nai = id->get_encoding(id);
 	/* TODO: maybe use regex? */
@@ -77,7 +77,7 @@ int get_imsi(identification_t *id, char *imsi, size_t imsi_len)
 	return 0;
 }
 
-int validate_imsi(const char *imsi)
+int epdg_validate_imsi(const char *imsi)
 {
 	if (!imsi)
 		return 1;
@@ -96,7 +96,7 @@ int validate_imsi(const char *imsi)
 	return 0;
 }
 
-int validate_apn(const char *apn)
+int epdg_validate_apn(const char *apn)
 {
 	/* don't support empty apn */
 	if (!apn)
@@ -108,7 +108,7 @@ int validate_apn(const char *apn)
 	return 0;
 }
 
-int get_apn(ike_sa_t *sa, char *apn, size_t apn_len)
+int epdg_get_apn(ike_sa_t *sa, char *apn, size_t apn_len)
 {
 	identification_t* apn_id;
 	chunk_t apn_chunk;

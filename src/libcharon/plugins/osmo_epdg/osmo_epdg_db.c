@@ -55,7 +55,7 @@ METHOD(osmo_epdg_db_t, create_subscriber, osmo_epdg_ue_t *,
 	char imsi[16] = {0};
 	uint32_t unique = ike_sa->get_unique_id(ike_sa);
 
-	if (get_imsi_ike(ike_sa, imsi, sizeof(imsi) - 1))
+	if (epdg_get_imsi_ike(ike_sa, imsi, sizeof(imsi) - 1))
 	{
 		return NULL;
 	}
@@ -102,7 +102,7 @@ METHOD(osmo_epdg_db_t, get_subscriber_ike, osmo_epdg_ue_t *,
 {
 	char imsi[16] = {0};
 
-	if (get_imsi_ike(ike_sa, imsi, sizeof(imsi)))
+	if (epdg_get_imsi_ike(ike_sa, imsi, sizeof(imsi)))
 	{
 		return NULL;
 	}
