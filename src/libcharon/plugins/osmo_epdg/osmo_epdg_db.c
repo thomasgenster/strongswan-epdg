@@ -22,6 +22,8 @@
 #include <threading/rwlock.h>
 #include <unistd.h>
 
+#include <osmocom/gsm/apn.h>
+
 #include "osmo_epdg_plugin.h"
 #include "osmo_epdg_db.h"
 #include "osmo_epdg_utils.h"
@@ -53,11 +55,18 @@ METHOD(osmo_epdg_db_t, create_subscriber, osmo_epdg_ue_t *,
 {
 	osmo_epdg_ue_t *ue;
 	char imsi[16] = {0};
+	char apn[APN_MAXLEN];
 	uint32_t unique = ike_sa->get_unique_id(ike_sa);
 
 	if (epdg_get_imsi_ike(ike_sa, imsi, sizeof(imsi) - 1))
 	{
 		return NULL;
+	}
+
+	if (epdg_get_apn(ike_sa, apn, APN_MAXLEN))
+	{
+		DBG1(DBG_NET, "epdg: get_quintuplet: Can't get APN.");
+		return FALSE;
 	}
 
 	this->lock->write_lock(this->lock);
@@ -68,7 +77,7 @@ METHOD(osmo_epdg_db_t, create_subscriber, osmo_epdg_ue_t *,
 		ue->put(ue);
 	}
 
-	ue = osmo_epdg_ue_create(unique, imsi);
+	ue = osmo_epdg_ue_create(unique, imsi, apn);
 	if (!ue)
 	{
 		DBG1(DBG_NET, "epdg_db: failed to create UE!");

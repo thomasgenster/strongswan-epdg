@@ -24,6 +24,7 @@
 #include <utils/debug.h>
 
 #include "osmo_epdg_ue.h"
+#include "osmo_epdg_utils.h"
 
 typedef struct private_osmo_epdg_ue_t private_osmo_epdg_ue_t;
 
@@ -49,6 +50,11 @@ struct private_osmo_epdg_ue_t {
 	char *imsi;
 
 	/**
+	 * APN encoded as character (foo.example)
+	 */
+	char *apn;
+
+	/**
 	 * IP address of the client. Might become a llist_t in the future
 	 */
 	host_t *address;
@@ -71,6 +77,12 @@ METHOD(osmo_epdg_ue_t, get_imsi, const char *,
        private_osmo_epdg_ue_t *this)
 {
 	return this->imsi;
+}
+
+METHOD(osmo_epdg_ue_t, get_apn, const char *,
+       private_osmo_epdg_ue_t *this)
+{
+	return this->apn;
 }
 
 METHOD(osmo_epdg_ue_t, set_address, void,
@@ -140,18 +152,26 @@ METHOD(osmo_epdg_ue_t, destroy, void,
        private_osmo_epdg_ue_t *this)
 {
 	this->lock->destroy(this->lock);
+	free(this->apn);
 	free(this->imsi);
 	free(this);
 }
 
-osmo_epdg_ue_t *osmo_epdg_ue_create(uint32_t id, const char *imsi)
+osmo_epdg_ue_t *osmo_epdg_ue_create(uint32_t id, const char *imsi, const char *apn)
 {
 	private_osmo_epdg_ue_t *this;
+
+	if (epdg_validate_apn(apn) ||
+	    epdg_validate_imsi(imsi))
+	{
+		return NULL;
+	}
 
 	INIT(this,
 	     .public = {
 		 .get = _get,
 		 .put = _put,
+		 .get_apn = _get_apn,
 		 .get_imsi = _get_imsi,
 		 .get_address = _get_address,
 		 .set_address = _set_address,
@@ -159,6 +179,7 @@ osmo_epdg_ue_t *osmo_epdg_ue_create(uint32_t id, const char *imsi)
 		 .set_state = _set_state,
 		 .destroy = _destroy,
 	     },
+	     .apn = strdup(apn),
 	     .imsi = strdup(imsi),
 	     .id = id,
 	     .lock = rwlock_create(RWLOCK_TYPE_DEFAULT),

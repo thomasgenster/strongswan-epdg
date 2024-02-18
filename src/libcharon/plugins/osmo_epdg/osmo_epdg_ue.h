@@ -56,6 +56,11 @@ enum osmo_epdg_ue_state {
  */
 struct osmo_epdg_ue_t {
 	/**
+	 * Get APN
+	 */
+	const char *(*get_apn)(osmo_epdg_ue_t *this);
+
+	/**
 	 * Get IMSI
 	 */
 	const char *(*get_imsi)(osmo_epdg_ue_t *this);
@@ -103,6 +108,6 @@ struct osmo_epdg_ue_t {
  * Create a osmo_epdg_ue instance.
  * A newly created object will come with refcount = 1. Use put() to destroy it.
  */
-osmo_epdg_ue_t *osmo_epdg_ue_create(uint32_t id, const char *imsi);
+osmo_epdg_ue_t *osmo_epdg_ue_create(uint32_t id, const char *imsi, const char *apn);
 
 #endif /* OSMO_EPDG_UE_H_ */
