@@ -57,13 +57,27 @@ enum osmo_epdg_ue_state {
 struct osmo_epdg_ue_t {
 	/**
 	 * Get APN
+	 * Should not change.
 	 */
 	const char *(*get_apn)(osmo_epdg_ue_t *this);
 
 	/**
 	 * Get IMSI
+	 * Should not change.
 	 */
 	const char *(*get_imsi)(osmo_epdg_ue_t *this);
+
+	/**
+	 * Get unique ID
+	 * The unique ID may change either by reconnect or rekey
+	 */
+	uint32_t (*get_id)(osmo_epdg_ue_t *this);
+
+	/**
+	 * Get unique ID
+	 * The unique ID may change either by reconnect or rekey
+	 */
+	void (*set_id)(osmo_epdg_ue_t *this, uint32_t unique_id);
 
 	/**
 	 * Get address. Returns NULL or a cloned' host_t object
@@ -84,7 +98,6 @@ struct osmo_epdg_ue_t {
 	 * Set state
 	 */
 	void (*set_state)(osmo_epdg_ue_t *this, enum osmo_epdg_ue_state state);
-
 
 	/**
 	 * Increase the internal refcount. Use put() when done with the object

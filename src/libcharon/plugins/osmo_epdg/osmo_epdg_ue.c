@@ -85,6 +85,18 @@ METHOD(osmo_epdg_ue_t, get_apn, const char *,
 	return this->apn;
 }
 
+METHOD(osmo_epdg_ue_t, get_id, uint32_t,
+       private_osmo_epdg_ue_t *this)
+{
+	return this->id;
+}
+
+METHOD(osmo_epdg_ue_t, set_id, void,
+       private_osmo_epdg_ue_t *this, uint32_t unique_id)
+{
+	this->id = unique_id;
+}
+
 METHOD(osmo_epdg_ue_t, set_address, void,
        private_osmo_epdg_ue_t *this, host_t *address)
 {
@@ -173,6 +185,8 @@ osmo_epdg_ue_t *osmo_epdg_ue_create(uint32_t id, const char *imsi, const char *a
 		 .put = _put,
 		 .get_apn = _get_apn,
 		 .get_imsi = _get_imsi,
+		 .get_id = _get_id,
+		 .set_id = _set_id,
 		 .get_address = _get_address,
 		 .set_address = _set_address,
 		 .get_state = _get_state,
