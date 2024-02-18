@@ -144,7 +144,7 @@ METHOD(osmo_epdg_ue_t, destroy, void,
 	free(this);
 }
 
-osmo_epdg_ue_t *osmo_epdg_ue_create(uint32_t id, char *imsi)
+osmo_epdg_ue_t *osmo_epdg_ue_create(uint32_t id, const char *imsi)
 {
 	private_osmo_epdg_ue_t *this;
 

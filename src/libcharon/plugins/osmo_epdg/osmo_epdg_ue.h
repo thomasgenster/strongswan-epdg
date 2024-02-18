@@ -103,6 +103,6 @@ struct osmo_epdg_ue_t {
  * Create a osmo_epdg_ue instance.
  * A newly created object will come with refcount = 1. Use put() to destroy it.
  */
-osmo_epdg_ue_t *osmo_epdg_ue_create(uint32_t id, char *imsi);
+osmo_epdg_ue_t *osmo_epdg_ue_create(uint32_t id, const char *imsi);
 
 #endif /* OSMO_EPDG_UE_H_ */
