@@ -152,7 +152,7 @@ static struct msgb *encode_to_msgb(struct osmo_gsup_message *gsup_msg)
 	ret = osmo_gsup_encode(msg, gsup_msg);
 	if (ret)
 	{
-		DBG1(DBG_NET, "GSUP: couldn't encode gsup message %d.", ret);
+		DBG1(DBG_NET, "epdg: gsupc: couldn't encode gsup message %d.", ret);
 		goto free_msg;
 	}
 
@@ -174,7 +174,7 @@ static bool enqueue(private_osmo_epdg_gsup_client_t *this, gsup_request_t *req, 
 {
 	bool ret = FALSE;
 
-	DBG1(DBG_NET, "Enqueuing message. Waiting %d ms for an answer", timeout_ms);
+	DBG1(DBG_NET, "epdg: gsupc: Enqueuing message. Waiting %d ms for an answer", timeout_ms);
 	req->mutex->lock(req->mutex);
 	this->pending->enqueue(this->pending, req);
 	ret = req->condvar->timed_wait(req->condvar, req->mutex, timeout_ms);
@@ -190,7 +190,7 @@ static bool enqueue(private_osmo_epdg_gsup_client_t *this, gsup_request_t *req, 
 			}
 			this->mutex->unlock(this->mutex);
 		}
-		DBG1(DBG_NET, "Message timedout!");
+		DBG1(DBG_NET, "epdg: gsupc: Message timedout!");
 	}
 
 	return ret;
@@ -220,7 +220,7 @@ METHOD(osmo_epdg_gsup_client_t, tunnel_request, osmo_epdg_gsup_response_t*,
 	struct msgb *msg;
 	bool timedout;
 
-	DBG1(DBG_NET, "Tunnel Request Request for %s", imsi);
+	DBG1(DBG_NET, "epdg: gsupc: Tunnel Request Request for %s", imsi);
 	gsup_msg.message_type = OSMO_GSUP_MSGT_EPDG_TUNNEL_REQUEST;
 	gsup_msg.current_rat_type = OSMO_RAT_EUTRAN_SGS;
 	gsup_msg.message_class = OSMO_GSUP_MESSAGE_CLASS_IPSEC_EPDG;
@@ -233,7 +233,7 @@ METHOD(osmo_epdg_gsup_client_t, tunnel_request, osmo_epdg_gsup_response_t*,
 	msg = encode_to_msgb(&gsup_msg);
 	if (!msg)
 	{
-		DBG1(DBG_NET, "Couldn't alloc/encode gsup message.");
+		DBG1(DBG_NET, "epdg: gsupc: Couldn't alloc/encode gsup message.");
 		return NULL;
 	}
 
@@ -263,7 +263,7 @@ METHOD(osmo_epdg_gsup_client_t, send_auth_request, osmo_epdg_gsup_response_t*,
 	size_t apn_enc_len = 0;
 	int ret;
 
-	DBG1(DBG_NET, "GSUP: Send Auth Request for %s", imsi);
+	DBG1(DBG_NET, "epdg: gsupc: Send Auth Request for %s", imsi);
 	gsup_msg.message_type = OSMO_GSUP_MSGT_SEND_AUTH_INFO_REQUEST;
 	gsup_msg.message_class = OSMO_GSUP_MESSAGE_CLASS_IPSEC_EPDG;
 	gsup_msg.num_auth_vectors = 1;
@@ -272,13 +272,13 @@ METHOD(osmo_epdg_gsup_client_t, send_auth_request, osmo_epdg_gsup_response_t*,
 	if (imsi_copy(gsup_msg.imsi, imsi))
 	{
 		/* TODO: inval imsi! */
-		DBG1(DBG_NET, "GSUP: SAR: Invalid IMSI.");
+		DBG1(DBG_NET, "epdg: gsupc: SAR: Invalid IMSI.");
 		return NULL;
 	}
 
 	if (!apn || strlen(apn) == 0)
 	{
-		DBG1(DBG_NET, "GSUP: SAR: Invalid APN.");
+		DBG1(DBG_NET, "epdg: gsupc: SAR: Invalid APN.");
 		return NULL;
 	}
 
@@ -292,7 +292,7 @@ METHOD(osmo_epdg_gsup_client_t, send_auth_request, osmo_epdg_gsup_response_t*,
 			gsup_msg.cn_domain = cn_domain;
 			break;
 		default:
-			DBG1(DBG_NET, "GSUP: SAR: Ignoring invalid cn_domain message.");
+			DBG1(DBG_NET, "epdg: gsupc: SAR: Ignoring invalid cn_domain message.");
 			break;
 	}
 
@@ -326,7 +326,7 @@ METHOD(osmo_epdg_gsup_client_t, send_auth_request, osmo_epdg_gsup_response_t*,
 	ret = osmo_apn_from_str(apn_enc, APN_MAXLEN, apn);
 	if (ret < 0)
 	{
-		DBG1(DBG_NET, "GSUP: Couldn't encode APN %s!", apn);
+		DBG1(DBG_NET, "epdg: gsupc: Couldn't encode APN %s!", apn);
 		return NULL;
 	}
 	apn_enc_len = ret;
@@ -337,7 +337,7 @@ METHOD(osmo_epdg_gsup_client_t, send_auth_request, osmo_epdg_gsup_response_t*,
 	msg = encode_to_msgb(&gsup_msg);
 	if (!msg)
 	{
-		DBG1(DBG_NET, "GSUP: Couldn't alloc/encode gsup message.");
+		DBG1(DBG_NET, "epdg: gsupc: Couldn't alloc/encode gsup message.");
 		return NULL;
 	}
 
@@ -346,7 +346,7 @@ METHOD(osmo_epdg_gsup_client_t, send_auth_request, osmo_epdg_gsup_response_t*,
 	timedout = enqueue(this, req, 5000);
 	if (timedout)
 	{
-		DBG1(DBG_NET, "GSUP: Timeout request.");
+		DBG1(DBG_NET, "epdg: gsupc: Timeout request.");
 		gsup_request_destroy(this, req);
 		return NULL;
 	}
@@ -385,14 +385,14 @@ METHOD(osmo_epdg_gsup_client_t, update_location, osmo_epdg_gsup_response_t *,
 			gsup_msg.cn_domain = cn_domain;
 			break;
 		default:
-			DBG1(DBG_NET, "GSUP: ULR: Ignoring invalid cn_domain message.");
+			DBG1(DBG_NET, "epdg: gsupc: ULR: Ignoring invalid cn_domain message.");
 			break;
 	}
 
 	msg = encode_to_msgb(&gsup_msg);
 	if (!msg)
 	{
-		DBG1(DBG_NET, "GSUP: ULR: Couldn't alloc/encode gsup message.");
+		DBG1(DBG_NET, "epdg: gsupc: ULR: Couldn't alloc/encode gsup message.");
 		return NULL;
 	}
 
@@ -441,14 +441,14 @@ void tx_insert_data_result(private_osmo_epdg_gsup_client_t *this, const char *im
 			gsup_msg.cn_domain = cn_domain;
 			break;
 		default:
-			DBG1(DBG_NET, "GSUP: ULR: Ignoring invalid cn_domain message.");
+			DBG1(DBG_NET, "epdg: gsupc: ULR: Ignoring invalid cn_domain message.");
 			break;
 	}
 
 	msg = encode_to_msgb(&gsup_msg);
 	if (!msg)
 	{
-		DBG1(DBG_NET, "GSUP: ULR: Couldn't alloc/encode gsup message.");
+		DBG1(DBG_NET, "epdg: gsupc: ULR: Couldn't alloc/encode gsup message.");
 	}
 	this->ipa->send(this->ipa, IPAC_PROTO_EXT_GSUP, msg);
 }
@@ -500,7 +500,7 @@ static bool on_recv_pdu(void *data, osmo_epdg_ipa_client_t *client, struct msgb 
 			if ((this->current_request->msg_type & 0xfffffffc) != (resp->gsup.message_type & 0xfffffffc))
 			{
 				/* Request, Result, Error, Other are encoded in the last 2 bits */
-				DBG1(DBG_NET, "GSUP: received non matching Result. Requested %s but received %s",
+				DBG1(DBG_NET, "epdg: gsupc: received non matching Result. Requested %s but received %s",
 					osmo_gsup_message_type_name(this->current_request->msg_type),
 					osmo_gsup_message_type_name(resp->gsup.message_type));
 				this->mutex->unlock(this->mutex);
@@ -508,7 +508,7 @@ static bool on_recv_pdu(void *data, osmo_epdg_ipa_client_t *client, struct msgb 
 			}
 			if (!this->current_request)
 			{
-				DBG2(DBG_NET, "GSUP: received response when no request waiting %02x. This might came too late.", resp->gsup.message_type);
+				DBG2(DBG_NET, "epdg: gsupc: received response when no request waiting %02x. This might came too late.", resp->gsup.message_type);
 				this->mutex->unlock(this->mutex);
 				goto out;
 			}
@@ -517,7 +517,7 @@ static bool on_recv_pdu(void *data, osmo_epdg_ipa_client_t *client, struct msgb 
 			this->mutex->unlock(this->mutex);
 			break;
 		default:
-			DBG1(DBG_NET, "GSUP received unknown message type %02x", resp->gsup.message_type);
+			DBG1(DBG_NET, "epdg: gsupc: received unknown message type %02x", resp->gsup.message_type);
 			goto out;
 	}
 	free(pdu);
@@ -577,7 +577,7 @@ static job_requeue_t queue_worker(private_osmo_epdg_gsup_client_t *this)
 osmo_epdg_gsup_client_t *osmo_epdg_gsup_client_create(char *uri)
 {
 	private_osmo_epdg_gsup_client_t *this;
-	DBG1(DBG_NET, "Starting osmo-epdg");
+	DBG1(DBG_NET, "epdg: gsupc: Starting");
 
 	INIT(this,
 			.public = {
