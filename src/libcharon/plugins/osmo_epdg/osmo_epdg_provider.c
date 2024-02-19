@@ -155,6 +155,11 @@ METHOD(attribute_provider_t, acquire_address, host_t*,
 {
 	/* yes this hurts. We can either move the attribute provider out of this class or do some pointer arithmetic to get the right this object */
 	this = container_of((void *) this, private_osmo_epdg_provider_t, public.attribute);
+	if (requested->get_family(requested) != AF_INET)
+	{
+		return NULL;
+	}
+
 	osmo_epdg_ue_t *ue = this->db->get_subscriber_ike(this->db, ike_sa);
 	host_t *address = NULL;
 	/* TODO: check if we want to limit the pool here as well to "epdg" similar what dhcp does */
@@ -164,6 +169,8 @@ METHOD(attribute_provider_t, acquire_address, host_t*,
 		DBG1(DBG_NET, "epdg_provider: acquire_address: Failed to get the UE by IKE");
 		return NULL;
 	}
+
+	/* TODO: check for IPv4/IPv6 */
 	address = ue->get_address(ue);
 	ue->put(ue);
 
