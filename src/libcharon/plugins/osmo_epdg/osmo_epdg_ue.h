@@ -80,6 +80,11 @@ struct osmo_epdg_ue_t {
 	void (*set_id)(osmo_epdg_ue_t *this, uint32_t unique_id);
 
 	/**
+	 * Get Linked list of osmo_epdg_attribute_t
+	 */
+	linked_list_t *(*get_attributes)(osmo_epdg_ue_t *this);
+
+	/**
 	 * Get address. Returns NULL or a cloned' host_t object
 	 */
 	host_t *(*get_address)(osmo_epdg_ue_t *this);
@@ -116,6 +121,13 @@ struct osmo_epdg_ue_t {
 	 */
 	void (*destroy)(osmo_epdg_ue_t *this);
 };
+
+struct osmo_epdg_attribute_t {
+	configuration_attribute_type_t type;
+	chunk_t value;
+	bool valid;
+};
+typedef struct osmo_epdg_attribute_t osmo_epdg_attribute_t;
 
 /**
  * Create a osmo_epdg_ue instance.

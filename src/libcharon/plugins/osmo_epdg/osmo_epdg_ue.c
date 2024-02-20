@@ -20,6 +20,7 @@
 
 #include <sa/ike_sa.h>
 #include <threading/rwlock.h>
+#include <collections/linked_list.h>
 #include <utils/utils.h>
 #include <utils/debug.h>
 
@@ -58,6 +59,13 @@ struct private_osmo_epdg_ue_t {
 	 * IP address of the client. Might become a llist_t in the future
 	 */
 	host_t *address;
+
+	/**
+	 * The requested attributes/PCO options on GTP
+	 * e.g. P-CSCF requests, DNS, ..
+	 * holds attribute_entry_t
+	 */
+	linked_list_t *attributes;
 
 	/**
 	 * Refcount to track this object.
@@ -145,6 +153,13 @@ METHOD(osmo_epdg_ue_t, get_state, enum osmo_epdg_ue_state,
 	return state;
 }
 
+METHOD(osmo_epdg_ue_t, get_attributes, linked_list_t *,
+       private_osmo_epdg_ue_t *this)
+{
+	/* TODO: check if we need to also take locking .. also refcounting would be great here */
+	return this->attributes;
+}
+
 METHOD(osmo_epdg_ue_t, get, void,
        private_osmo_epdg_ue_t *this)
 {
@@ -160,10 +175,23 @@ METHOD(osmo_epdg_ue_t, put, void,
 	}
 }
 
+
+CALLBACK(destroy_attribute, void,
+	osmo_epdg_attribute_t *attr)
+{
+	if (attr->valid)
+	{
+		chunk_free(&attr->value);
+	}
+	free(attr);
+}
+
 METHOD(osmo_epdg_ue_t, destroy, void,
        private_osmo_epdg_ue_t *this)
 {
 	this->lock->destroy(this->lock);
+	this->attributes->destroy_function(this->attributes, destroy_attribute);
+
 	free(this->apn);
 	free(this->imsi);
 	free(this);
@@ -191,6 +219,7 @@ osmo_epdg_ue_t *osmo_epdg_ue_create(uint32_t id, const char *imsi, const char *a
 		 .set_address = _set_address,
 		 .get_state = _get_state,
 		 .set_state = _set_state,
+		 .get_attributes = _get_attributes,
 		 .destroy = _destroy,
 	     },
 	     .apn = strdup(apn),
@@ -198,8 +227,27 @@ osmo_epdg_ue_t *osmo_epdg_ue_create(uint32_t id, const char *imsi, const char *a
 	     .id = id,
 	     .lock = rwlock_create(RWLOCK_TYPE_DEFAULT),
 	     .state = UE_WAIT_LOCATION_UPDATE,
+	     .attributes = linked_list_create(),
 	     .refcount = 1,
 	     );
+
+	/* hardcode P-CSCF and DNS entry */
+	osmo_epdg_attribute_t *entry;
+	host_t *host = host_create_from_string_and_family("10.74.0.31", AF_INET, 0);
+	INIT(entry,
+		.type = INTERNAL_IP4_DNS,
+		.value = chunk_clone(host->get_address(host)),
+		.valid = TRUE,
+	);
+	this->attributes->insert_last(this->attributes, entry);
+
+	INIT(entry,
+		.type = P_CSCF_IP4_ADDRESS,
+		.value = chunk_clone(host->get_address(host)),
+		.valid = TRUE,
+	);
+	this->attributes->insert_last(this->attributes, entry);
+	host->destroy(host);
 
 	return &this->public;
 }

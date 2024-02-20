@@ -23,6 +23,7 @@
 #include "osmo_epdg_ue.h"
 
 #include <daemon.h>
+#include <collections/linked_list.h>
 #include <credentials/keys/shared_key.h>
 #include <osmocom/gsm/apn.h>
 #include <osmocom/gsm/protocol/gsm_04_08_gprs.h>
@@ -199,13 +200,55 @@ METHOD(attribute_provider_t, release_address, bool,
 	return found;
 }
 
+/* see attr_provider for similar usage */
+CALLBACK(attribute_enum_filter, bool,
+        void *data, enumerator_t *orig, va_list args)
+{
+	osmo_epdg_attribute_t *entry;
+	configuration_attribute_type_t *type;
+	chunk_t *value;
+
+	VA_ARGS_VGET(args, type, value);
+	while (orig->enumerate(orig, &entry))
+	{
+		if (entry->valid)
+		{
+			*type = entry->type;
+			*value = entry->value;
+			return TRUE;
+		}
+	}
+
+	return FALSE;
+}
+
 METHOD(attribute_provider_t, create_attribute_enumerator, enumerator_t*,
 	private_osmo_epdg_provider_t *this, linked_list_t *pools, ike_sa_t *ike_sa,
 	linked_list_t *vips)
 {
-	/* don't forget fixing the this point if needed */
-	/* no additional attributes for this ike_sa */
-	return enumerator_create_empty();
+	this = container_of((void *) this, private_osmo_epdg_provider_t, public.attribute);
+	enumerator_t *enumerator = NULL;
+	linked_list_t *attributes = NULL;
+	osmo_epdg_ue_t *ue = this->db->get_subscriber_ike(this->db, ike_sa);
+
+	/* create an iterator based on the llist */
+	if (!ue)
+	{
+		return enumerator_create_empty();
+	}
+
+	/* this ref is giving into the enumerator */
+	ue->get(ue);
+	attributes = ue->get_attributes(ue);
+	enumerator = enumerator_create_cleaner(
+			enumerator_create_filter(
+				attributes->create_enumerator(attributes),
+				attribute_enum_filter, NULL, NULL),
+			(void *)ue->put, ue);
+
+	/* this ref was taken by get_subscriber */
+	ue->put(ue);
+	return enumerator;
 }
 
 METHOD(osmo_epdg_provider_t, destroy, void,
