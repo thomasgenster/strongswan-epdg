@@ -333,6 +333,7 @@ METHOD(osmo_epdg_gsup_client_t, tunnel_request, osmo_epdg_gsup_response_t*,
 {
 	struct osmo_gsup_message gsup_msg = {0};
 	struct msgb *msg;
+	const char *pco = "\x80\x00\x0d\x00\x00\x0c\x00";
 	bool timedout;
 
 	DBG1(DBG_NET, "epdg: gsupc: Tunnel Request Request for %s", imsi);
@@ -344,6 +345,9 @@ METHOD(osmo_epdg_gsup_client_t, tunnel_request, osmo_epdg_gsup_response_t*,
 		/* TODO: inval imsi! */
 		return NULL;
 	}
+
+	gsup_msg.pco = pco;
+	gsup_msg.pco_len = 7;
 
 	msg = encode_to_msgb(&gsup_msg);
 	if (!msg)
