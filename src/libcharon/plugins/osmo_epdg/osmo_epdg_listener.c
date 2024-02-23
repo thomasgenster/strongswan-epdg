@@ -84,7 +84,7 @@ METHOD(listener_t, eap_authorize, bool,
 	}
 	ue->set_state(ue, UE_LOCATION_UPDATED);
 	ue->put(ue);
-	free(resp);
+	osmo_epdg_gsup_resp_free(resp);
 	return TRUE;
 
 err:
@@ -95,10 +95,7 @@ err:
 		ue->put(ue);
 	}
 
-	if (resp)
-	{
-		free(resp);
-	}
+	osmo_epdg_gsup_resp_free(resp);
 	/* keep still subscribed */
 	return TRUE;
 }
@@ -195,15 +192,11 @@ METHOD(listener_t, authorize, bool,
 	ue->put(ue);
 
 	address->destroy(address);
-	free(resp);
+	osmo_epdg_gsup_resp_free(resp);
 	return TRUE;
 
 err:
-
-	if (resp)
-	{
-		free(resp);
-	}
+	osmo_epdg_gsup_resp_free(resp);
 
 	if (ue)
 	{

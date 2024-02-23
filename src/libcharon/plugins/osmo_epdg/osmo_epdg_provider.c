@@ -112,14 +112,15 @@ METHOD(simaka_provider_t, get_quintuplet, bool,
 	if (resp->gsup.message_type != OSMO_GSUP_MSGT_SEND_AUTH_INFO_RESULT)
 	{
 		DBG1(DBG_NET, "epdg_provider: SendAuthInfo Error! Cause: %02x", resp->gsup.cause);
-		return FALSE;
+		goto err;
 	}
 
 	struct osmo_auth_vector *auth = &resp->gsup.auth_vectors[0];
 	if (resp->gsup.num_auth_vectors == 0)
 	{
 		/* TODO: invalid auth data received */
-		return FALSE;
+		DBG1(DBG_NET, "epdg_provider: SendAuthInfo Invalid Auth Received!");
+		goto err;
 	}
 
 	memcpy(rand, auth->rand, AKA_RAND_LEN);
@@ -129,8 +130,11 @@ METHOD(simaka_provider_t, get_quintuplet, bool,
 	memcpy(xres, auth->res, auth->res_len);
 	*xres_len = auth->res_len;
 	
-	free(resp);
+	osmo_epdg_gsup_resp_free(resp);
 	return TRUE;
+err:
+	osmo_epdg_gsup_resp_free(resp);
+	return FALSE;
 }
 
 METHOD(simaka_provider_t, resync, bool,

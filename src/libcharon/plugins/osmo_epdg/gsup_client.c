@@ -600,6 +600,7 @@ static bool on_recv_pdu(void *data, osmo_epdg_ipa_client_t *client, struct msgb 
 		goto out;
 	}
 
+	resp->pdu = pdu;
 	DBG1(DBG_NET, "epdg: gsupc: receive gsup message %s/%d",
 	     resp->gsup.imsi, resp->gsup.message_type);
 
@@ -646,7 +647,6 @@ static bool on_recv_pdu(void *data, osmo_epdg_ipa_client_t *client, struct msgb 
 			DBG1(DBG_NET, "epdg: gsupc: received unknown message type %02x", resp->gsup.message_type);
 			goto out;
 	}
-	free(pdu);
 	return TRUE;
 
 out:

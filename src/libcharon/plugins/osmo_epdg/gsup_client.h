@@ -32,8 +32,25 @@
 
 struct osmo_epdg_gsup_response_t {
 	struct osmo_gsup_message gsup;
+	/* keep pdu around because gsup takes ownership of data out of pdu */
+	struct msgb *pdu;
 };
 typedef struct osmo_epdg_gsup_response_t osmo_epdg_gsup_response_t;
+
+static inline void osmo_epdg_gsup_resp_free(osmo_epdg_gsup_response_t *resp)
+{
+	if (!resp)
+	{
+		return;
+	}
+
+	if (resp->pdu)
+	{
+		free(resp->pdu);
+	}
+
+	free(resp);
+}
 
 typedef struct osmo_epdg_gsup_client_t osmo_epdg_gsup_client_t;
 
