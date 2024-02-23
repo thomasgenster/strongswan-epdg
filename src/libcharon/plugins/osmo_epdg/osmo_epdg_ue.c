@@ -231,23 +231,5 @@ osmo_epdg_ue_t *osmo_epdg_ue_create(uint32_t id, const char *imsi, const char *a
 	     .refcount = 1,
 	     );
 
-	/* hardcode P-CSCF and DNS entry */
-	osmo_epdg_attribute_t *entry;
-	host_t *host = host_create_from_string_and_family("10.74.0.31", AF_INET, 0);
-	INIT(entry,
-		.type = INTERNAL_IP4_DNS,
-		.value = chunk_clone(host->get_address(host)),
-		.valid = TRUE,
-	);
-	this->attributes->insert_last(this->attributes, entry);
-
-	INIT(entry,
-		.type = P_CSCF_IP4_ADDRESS,
-		.value = chunk_clone(host->get_address(host)),
-		.valid = TRUE,
-	);
-	this->attributes->insert_last(this->attributes, entry);
-	host->destroy(host);
-
 	return &this->public;
 }
