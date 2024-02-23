@@ -85,6 +85,27 @@ struct osmo_epdg_ue_t {
 	linked_list_t *(*get_attributes)(osmo_epdg_ue_t *this);
 
 	/**
+	 * The attributes the UE requested. Pass ike->create_attribute_enumerator() towards it.
+	 * An enumerator(configuration_attribute_type_t, chunk_t, bool).
+	 * The enumerator will be destroyed by request_attributes.
+	 */
+	int (*fill_request_attributes)(osmo_epdg_ue_t *this, enumerator_t *enumerator);
+
+	/**
+	 * Get PCO encoded elements. It will return attributes encoded as PCO.
+	 * On error returns != 0.
+	 * On success, the caller must free *pco.
+	 */
+	int (*generate_pco)(osmo_epdg_ue_t *this, char **pco, uint8_t *pco_len);
+
+	/**
+	 * Get PCO encoded elements. It will return attributes encoded as PCO.
+	 * On error returns != 0.
+	 * On success, the caller must free *pco.
+	 */
+	int (*convert_pco)(osmo_epdg_ue_t *this, const uint8_t *pco, uint8_t pco_len);
+
+	/**
 	 * Get address. Returns NULL or a cloned' host_t object
 	 */
 	host_t *(*get_address)(osmo_epdg_ue_t *this);

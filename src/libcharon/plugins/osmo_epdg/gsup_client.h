@@ -85,7 +85,7 @@ struct osmo_epdg_gsup_client_t {
 	 * @return		NULL or the osmo_gsup_message
 	 */
 	osmo_epdg_gsup_response_t *(*tunnel_request)(osmo_epdg_gsup_client_t *this,
-			const char *imsi);
+			const char *imsi, const char *pco, uint8_t pco_len);
 
 	/**
 	 * Destroy a osmo_epdg_gsup_client_t.
