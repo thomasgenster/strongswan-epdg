@@ -590,6 +590,7 @@ static bool on_recv_pdu(void *data, osmo_epdg_ipa_client_t *client, struct msgb 
 	resp = calloc(1, sizeof(*resp));
 	if (!resp)
 	{
+		free(pdu);
 		return TRUE;
 	}
 
