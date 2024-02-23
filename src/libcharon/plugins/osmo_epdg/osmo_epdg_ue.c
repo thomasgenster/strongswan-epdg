@@ -24,6 +24,7 @@
 #include <utils/utils.h>
 #include <utils/debug.h>
 
+#include "pco.h"
 #include "osmo_epdg_ue.h"
 #include "osmo_epdg_utils.h"
 
@@ -65,7 +66,14 @@ struct private_osmo_epdg_ue_t {
 	 * e.g. P-CSCF requests, DNS, ..
 	 * holds attribute_entry_t
 	 */
-	linked_list_t *attributes;
+	linked_list_t *request_attributes;
+
+	/**
+	 * The response attributes/PCO options on GTP
+	 * e.g. P-CSCF requests, DNS, ..
+	 * holds attribute_entry_t
+	 */
+	linked_list_t *response_attributes;
 
 	/**
 	 * Refcount to track this object.
@@ -157,7 +165,232 @@ METHOD(osmo_epdg_ue_t, get_attributes, linked_list_t *,
        private_osmo_epdg_ue_t *this)
 {
 	/* TODO: check if we need to also take locking .. also refcounting would be great here */
-	return this->attributes;
+	return this->response_attributes;
+}
+
+/* Fill all request_attributes into the UE object to generate PCO later out of it */
+METHOD(osmo_epdg_ue_t, fill_request_attributes, int,
+       private_osmo_epdg_ue_t *this, enumerator_t *enumerator)
+{
+	configuration_attribute_type_t type;
+	chunk_t chunk;
+	bool handled;
+	osmo_epdg_attribute_t *entry;
+
+	if (!enumerator)
+	{
+		return -EINVAL;
+	}
+
+	while (enumerator->enumerate(enumerator, &type, &chunk, &handled))
+	{
+		INIT(entry,
+			.type = type,
+			.value = chunk_empty,
+			.valid = FALSE,
+		);
+		this->request_attributes->insert_last(this->request_attributes, entry);
+	}
+	enumerator->destroy(enumerator);
+
+	return 0;
+}
+
+/* requires a enumerator from attributes. The enumerator left intact. */
+static int count_pcos(enumerator_t *enumerator)
+{
+	osmo_epdg_attribute_t *entry;
+	int count = 0;
+
+	while (enumerator->enumerate(enumerator, (void **) &entry))
+	{
+		switch (entry->type)
+		{
+		case INTERNAL_IP4_DNS:
+		case INTERNAL_IP6_DNS:
+		case P_CSCF_IP4_ADDRESS:
+		case P_CSCF_IP6_ADDRESS:
+			count++;
+			break;
+		default:
+			break;
+		}
+	}
+
+	return count;
+}
+
+static inline int encode_pco_req(char *data, enum pco_protocols pco_protocol)
+{
+	struct pco_element pco = { .length = 0 };
+	pco.protocol_id = htons(pco_protocol);
+	memcpy(data, &pco, sizeof(struct pco_element));
+	return sizeof(struct pco_element);
+}
+
+#define MAX_PCO_LEN 251
+
+METHOD(osmo_epdg_ue_t, generate_pco, int,
+       private_osmo_epdg_ue_t *this, char **pco, uint8_t *pco_len)
+{
+	enumerator_t *enumerator;
+	osmo_epdg_attribute_t *entry;
+	int pcos_num;
+	size_t max_size;
+	uint8_t iter = 0;
+
+	if (!pco || !pco_len)
+	{
+		return -EINVAL;
+	}
+
+	enumerator = this->request_attributes->create_enumerator(this->request_attributes);
+	if (!enumerator)
+	{
+		return -EBUSY;
+	}
+
+	pcos_num = count_pcos(enumerator);
+	if (pcos_num == 0)
+	{
+		*pco = NULL;
+		*pco_len = 0;
+		enumerator->destroy(enumerator);
+		return 0;
+	}
+
+	/* 3GPP TS 10.5.6.3: Encode here octet 3 - ZA
+	 * Octet: 3 as header
+	 * a PCO with zero length requires 3 bytes. zero length because we request it
+	 */
+	max_size = 1 + pcos_num * 3;
+	if (max_size > MAX_PCO_LEN)
+	{
+		enumerator->destroy(enumerator);
+		return -E2BIG;
+	}
+
+	*pco = calloc(1, 1 + pcos_num * 3);
+	this->request_attributes->reset_enumerator(this->request_attributes, enumerator);
+
+	/* Config protocol: 0x00 + Ext bit = 0x80 */
+	iter = 0;
+	(*pco)[iter++] = 0x80;
+
+	while (enumerator->enumerate(enumerator, (void **) &entry))
+	{
+		switch (entry->type)
+		{
+			case P_CSCF_IP6_ADDRESS:
+				iter += encode_pco_req(*pco + iter, PCO_P_PCSCF_ADDR);
+				break;
+			case INTERNAL_IP6_DNS:
+				iter += encode_pco_req(*pco + iter, PCO_P_DNS_IPv6_ADDR);
+				break;
+			case P_CSCF_IP4_ADDRESS:
+				iter += encode_pco_req(*pco + iter, PCO_P_PCSCF_IPv4_ADDR);
+				break;
+			case INTERNAL_IP4_DNS:
+				iter += encode_pco_req(*pco + iter, PCO_P_DNS_IPv4_ADDR);
+				break;
+			default:
+				break;
+		}
+	}
+	*pco_len = iter;
+	enumerator->destroy(enumerator);
+
+	return 0;
+}
+
+/* Fill the attribute of type *type* with the value, len
+ */
+static void set_attribute(private_osmo_epdg_ue_t *this,
+		  configuration_attribute_type_t type, const char *value, uint8_t len)
+{
+	osmo_epdg_attribute_t *entry;
+
+	INIT(entry,
+		.type = type,
+		.value = chunk_clone(chunk_create((char *) value, len)),
+		.valid = TRUE,
+	);
+	this->response_attributes->insert_last(this->response_attributes, entry);
+}
+
+/* Take the PCO response from the PGW and fill the attributes */
+METHOD(osmo_epdg_ue_t, convert_pco, int,
+       private_osmo_epdg_ue_t *this, const uint8_t *pco, uint8_t pco_len)
+{
+	int iter = 0;
+	uint16_t a_pco = 0;
+	uint8_t a_pco_len = 0;
+	const char *value;
+
+	if (pco_len == 0)
+	{
+		return 0;
+	}
+
+	if (!pco)
+	{
+		return -EINVAL;
+	}
+
+	if (pco[iter++] != 0x80)
+	{
+		return -EBADF;
+	}
+
+	/* first run validate length of TLVs */
+	while (iter + 2 < pco_len)
+	{
+		/* Skip Type field */
+		iter += 2;
+		/* uint8_t length field */
+		iter += (uint8_t) pco[iter] + 1;
+	}
+
+	/* TLV doesn't add up. Either additional data or not enough data */
+	if (iter != pco_len)
+	{
+		return -EFBIG;
+	}
+	iter = 1;
+
+	/* second run parse known TLVs */
+	while (iter + 2 < pco_len)
+	{
+		a_pco = pco[iter] << 8 | pco[iter + 1];
+		a_pco_len = pco[iter + 2];
+
+		/* header size + value */
+		iter += 3 + a_pco_len;
+		/* we ignore empty PCO */
+		if (!a_pco_len)
+		{
+			continue;
+		}
+
+		value = (const char *) &pco[iter + 3];
+		switch (a_pco)
+		{
+			case PCO_P_PCSCF_IPv4_ADDR:
+				set_attribute(this, P_CSCF_IP4_ADDRESS, value, a_pco_len);
+				break;
+			case PCO_P_PCSCF_ADDR: /* IPv6 */
+				set_attribute(this, P_CSCF_IP6_ADDRESS, value, a_pco_len);
+				break;
+			case PCO_P_DNS_IPv4_ADDR:
+				set_attribute(this, INTERNAL_IP4_DNS, value, a_pco_len);
+				break;
+			case PCO_P_DNS_IPv6_ADDR:
+				set_attribute(this, INTERNAL_IP6_DNS, value, a_pco_len);
+				break;
+		}
+	}
+
+	return 0;
 }
 
 METHOD(osmo_epdg_ue_t, get, void,
@@ -190,7 +423,8 @@ METHOD(osmo_epdg_ue_t, destroy, void,
        private_osmo_epdg_ue_t *this)
 {
 	this->lock->destroy(this->lock);
-	this->attributes->destroy_function(this->attributes, destroy_attribute);
+	this->request_attributes->destroy_function(this->request_attributes, destroy_attribute);
+	this->response_attributes->destroy_function(this->response_attributes, destroy_attribute);
 
 	free(this->apn);
 	free(this->imsi);
@@ -220,6 +454,9 @@ osmo_epdg_ue_t *osmo_epdg_ue_create(uint32_t id, const char *imsi, const char *a
 		 .get_state = _get_state,
 		 .set_state = _set_state,
 		 .get_attributes = _get_attributes,
+		 .fill_request_attributes = _fill_request_attributes,
+		 .generate_pco = _generate_pco,
+		 .convert_pco = _convert_pco,
 		 .destroy = _destroy,
 	     },
 	     .apn = strdup(apn),
@@ -227,7 +464,8 @@ osmo_epdg_ue_t *osmo_epdg_ue_create(uint32_t id, const char *imsi, const char *a
 	     .id = id,
 	     .lock = rwlock_create(RWLOCK_TYPE_DEFAULT),
 	     .state = UE_WAIT_LOCATION_UPDATE,
-	     .attributes = linked_list_create(),
+	     .request_attributes = linked_list_create(),
+	     .response_attributes = linked_list_create(),
 	     .refcount = 1,
 	     );
 

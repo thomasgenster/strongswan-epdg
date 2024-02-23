@@ -110,7 +110,9 @@ METHOD(listener_t, authorize, bool,
 	host_t *address = NULL;
 	struct osmo_gsup_pdp_info *pdp_info;
 	osmo_epdg_gsup_response_t *resp = NULL;
-
+	char *pco;
+	uint8_t pco_len;
+	int ret;
 
 	DBG1(DBG_NET, "Authorized: uniq 0x%08x, name %s final: %d, eap: %d!",
 		ike_sa->get_unique_id(ike_sa),
@@ -143,8 +145,21 @@ METHOD(listener_t, authorize, bool,
 		goto err;
 	}
 
+	if (ue->fill_request_attributes(ue, ike_sa->create_attribute_enumerator(ike_sa)))
+	{
+		DBG1(DBG_NET, "epdg: authorize: Can't pass requested_attributes towards UE for imsi %s via EAP identity.", imsi);
+		goto err;
+	}
+
+	ret = ue->generate_pco(ue, &pco, &pco_len);
+	if (ret)
+	{
+		DBG1(DBG_NET, "epdg: authorize: Can't encode PCO for imsi %s via EAP identity. Ret = %d.", imsi, ret);
+		goto err;
+	}
+
 	ue->set_state(ue, UE_WAIT_TUNNEL);
-	resp = this->gsup->tunnel_request(this->gsup, imsi);
+	resp = this->gsup->tunnel_request(this->gsup, imsi, pco, pco_len);
 	if (!resp)
 	{
 		DBG1(DBG_NET, "epdg_listener: Tunnel Request: GSUP: couldn't send.");
@@ -187,16 +202,30 @@ METHOD(listener_t, authorize, bool,
 		goto err;
 	}
 
+	/* Convert PCO back into Attributes */
+	ret = ue->convert_pco(ue, resp->gsup.pco, resp->gsup.pco_len);
+	if (ret)
+	{
+		DBG1(DBG_NET, "epdg_listener: Tunnel Response: %s failed to convert Response PCO back into Config Attributes with %d", imsi, ret);
+		goto err;
+	}
+
 	ue->set_address(ue, address);
 	ue->set_state(ue, UE_TUNNEL_READY);
 	ue->put(ue);
 
 	address->destroy(address);
+	free(pco);
 	osmo_epdg_gsup_resp_free(resp);
 	return TRUE;
 
 err:
 	osmo_epdg_gsup_resp_free(resp);
+
+	if (pco)
+	{
+		free(pco);
+	}
 
 	if (ue)
 	{
