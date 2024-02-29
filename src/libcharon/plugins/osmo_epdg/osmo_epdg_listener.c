@@ -110,7 +110,7 @@ METHOD(listener_t, authorize, bool,
 	host_t *address = NULL;
 	struct osmo_gsup_pdp_info *pdp_info;
 	osmo_epdg_gsup_response_t *resp = NULL;
-	char *pco;
+	char *pco = NULL;
 	uint8_t pco_len;
 	int ret;
 
