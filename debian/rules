@@ -22,6 +22,10 @@ CONFIGUREARGS := --libdir=/usr/lib --libexecdir=/usr/lib \
 		--enable-eap-tls \
 		--enable-eap-tnc \
 		--enable-eap-ttls \
+		--enable-eap-aka-3gpp \
+		--enable-eap-aka-3gpp2 \
+		--enable-save-keys \
+		--enable-osmo-epdg \
 		--enable-error-notify \
 		--enable-forecast \
 		--enable-gcm \
@@ -42,6 +46,7 @@ CONFIGUREARGS := --libdir=/usr/lib --libexecdir=/usr/lib \
 		--enable-xauth-pam \
 		--disable-blowfish \
 		--disable-fast \
+		--disable-scepclient \
 		--disable-des # BSD-Young license
 	#--with-user=strongswan --with-group=nogroup
 	#	--enable-kernel-pfkey --enable-kernel-klips \
