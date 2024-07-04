@@ -1,0 +1,5 @@
+strongswan (1-0.0.1) unstable; urgency=medium
+
+  * First initial strongswan version for osmo-epdg
+
+ -- Alexander Couzens <lynxis@fe80.eu>  Thu, 4 Jul 2024 20:00:00 +0100
