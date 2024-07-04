@@ -2,6 +2,8 @@
 usr/lib/ipsec/plugins/libstrongswan-addrblock.so
 usr/lib/ipsec/plugins/libstrongswan-certexpire.so
 usr/lib/ipsec/plugins/libstrongswan-eap-aka.so
+usr/lib/ipsec/plugins/libstrongswan-eap-aka-3gpp.so
+usr/lib/ipsec/plugins/libstrongswan-eap-aka-3gpp2.so
 usr/lib/ipsec/plugins/libstrongswan-eap-gtc.so
 usr/lib/ipsec/plugins/libstrongswan-eap-identity.so
 usr/lib/ipsec/plugins/libstrongswan-eap-md5.so
@@ -17,6 +19,8 @@ usr/lib/ipsec/plugins/libstrongswan-led.so
 usr/lib/ipsec/plugins/libstrongswan-lookip.so
 #usr/lib/ipsec/plugins/libstrongswan-medsrv.so
 #usr/lib/ipsec/plugins/libstrongswan-medcli.so
+usr/lib/ipsec/plugins/libstrongswan-osmo-epdg.so
+usr/lib/ipsec/plugins/libstrongswan-save-keys.so
 usr/lib/ipsec/plugins/libstrongswan-tnc-tnccs.so
 usr/lib/ipsec/plugins/libstrongswan-unity.so
 usr/lib/ipsec/plugins/libstrongswan-xauth-eap.so
@@ -25,6 +29,8 @@ usr/lib/ipsec/plugins/libstrongswan-xauth-pam.so
 usr/share/strongswan/templates/config/plugins/addrblock.conf
 usr/share/strongswan/templates/config/plugins/certexpire.conf
 usr/share/strongswan/templates/config/plugins/eap-aka.conf
+usr/share/strongswan/templates/config/plugins/eap-aka-3gpp.conf
+usr/share/strongswan/templates/config/plugins/eap-aka-3gpp2.conf
 usr/share/strongswan/templates/config/plugins/eap-gtc.conf
 usr/share/strongswan/templates/config/plugins/eap-identity.conf
 usr/share/strongswan/templates/config/plugins/eap-md5.conf
@@ -40,6 +46,7 @@ usr/share/strongswan/templates/config/plugins/led.conf
 usr/share/strongswan/templates/config/plugins/lookip.conf
 #usr/share/strongswan/templates/config/plugins/medsrv.conf
 #usr/share/strongswan/templates/config/plugins/medcli.conf
+usr/share/strongswan/templates/config/plugins/osmo-epdg.conf
 usr/share/strongswan/templates/config/plugins/tnc-tnccs.conf
 usr/share/strongswan/templates/config/plugins/unity.conf
 usr/share/strongswan/templates/config/plugins/xauth-eap.conf
@@ -49,6 +56,8 @@ etc/strongswan.d/tnc.conf
 etc/strongswan.d/charon/addrblock.conf
 etc/strongswan.d/charon/certexpire.conf
 etc/strongswan.d/charon/eap-aka.conf
+etc/strongswan.d/charon/eap-aka-3gpp.conf
+etc/strongswan.d/charon/eap-aka-3gpp2.conf
 etc/strongswan.d/charon/eap-gtc.conf
 etc/strongswan.d/charon/eap-identity.conf
 etc/strongswan.d/charon/eap-md5.conf
@@ -64,6 +73,7 @@ etc/strongswan.d/charon/led.conf
 etc/strongswan.d/charon/lookip.conf
 #etc/strongswan.d/charon/medsrv.conf
 #etc/strongswan.d/charon/medcli.conf
+etc/strongswan.d/charon/osmo-epdg.conf
 etc/strongswan.d/charon/tnc-tnccs.conf
 etc/strongswan.d/charon/unity.conf
 etc/strongswan.d/charon/xauth-eap.conf
