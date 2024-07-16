@@ -1,10 +1,18 @@
 # strongSwan osmo-epdg component
 
-- strongswan + a osmo-epdg plugins
+This repository contains a modified version of the strongswan code base to use it
+together with [osmo-epdg](https://osmocom.org/projects/osmo-epdg/wiki/)
+in order to operate a 3GPP ePDG (evolved Packet Data Gateway), for example to provide
+VoWiFi services.
+
+    [UE] <-> [strongswan] <-> [osmo-ePDG] <> [HSS]
+                                          <> [PGW]
+
+osmo-epdg development has been supported by funding from the [NLnet foundation](https://nlnet.nl/).
 
 ## example configuration
 
-See ./osmo-epdg for a full example configuration (both UE and ePDG).
+See `./osmo-epdg` for a full example configuration (both UE and ePDG).
 
 The ePDG must use the address 192.168.0.2
 
