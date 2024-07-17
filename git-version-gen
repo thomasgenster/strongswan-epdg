@@ -8,5 +8,5 @@ if [ -n "$VERSION_FILE" ] && [ -f "$VERSION_FILE" ]; then
 	exit $?
 fi
 
-git describe --abbrev=4 --tags '--match=osmo-epdg-[0-9]*\.[0-9]*\.[0-9a-z]*' 'HEAD' | sed 's/osmo-epdg-//g'
+echo "$(git describe --abbrev=4 --tags '--match=osmo-epdg-[0-9]*\.[0-9]*\.[0-9a-z]*' 'HEAD' | sed 's/osmo-epdg-//g')-osmo-epdg"
 exit $?
