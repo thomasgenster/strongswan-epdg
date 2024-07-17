@@ -1,4 +1,26 @@
-strongswan (0.0.1) unstable; urgency=medium
+strongswan (2:0.1.1-osmo-epdg) unstable; urgency=medium
+
+  [ Tobias Brunner ]
+  * openssl: Load "legacy" provider in OpenSSL 3 for algorithms like MD4, DES etc.
+  * openssl: Make fips_mode option work with OpenSSL 3
+  * openssl: Log loaded providers
+
+  [ Alexander Couzens ]
+  * debian: remove kdf plugin file
+  * debian: remove missing man pages
+  * debian: configure: --disable-scepclient
+  * debian: add build dependency to libosmocore-dev
+  * debian: install osmo-epdg to extra-plugins
+  * debian: add _copyright to not_installed
+  * add a simplified git-version-gen script
+
+  [ Harald Welte ]
+  * README.md: Add a bit more overview informtion and link to homepage
+  * use NLnet suggested wording to reference funding
+
+ -- User <osmith@sysmocom.de>  Wed, 17 Jul 2024 11:10:25 +0200
+
+strongswan (2:0.1.0-osmo-epdg) unstable; urgency=medium
 
   * First initial strongswan version for osmo-epdg
 
