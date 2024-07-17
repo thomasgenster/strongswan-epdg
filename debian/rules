@@ -82,6 +82,10 @@ ifeq ($(DEB_HOST_ARCH_OS),linux)
 		--enable-af-alg \
 		--enable-connmark \
 		--enable-systemd --enable-swanctl
+
+	# Explicitly set systemdsystemunitdir, so the build passes on debian
+	# unstable and ubuntu 24.04 too
+	CONFIGUREARGS += --with-systemdsystemunitdir=/lib/systemd/system
 endif
 
 ifeq ($(DEB_HOST_ARCH_OS),kfreebsd)
