@@ -1,3 +1,12 @@
+strongswan (2:0.1.2-osmo-epdg) unstable; urgency=medium
+
+  [ Oliver Smith ]
+  * git-version-gen: end in osmo-epdg
+  * debian/control: set maintainer to Osmocom team
+  * debian/rules: hardcode systemdsystemunitdir
+
+ -- User <osmith@sysmocom.de>  Mon, 29 Jul 2024 11:17:29 +0200
+
 strongswan (2:0.1.1-osmo-epdg) unstable; urgency=medium
 
   [ Tobias Brunner ]
