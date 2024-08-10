@@ -118,7 +118,7 @@ struct private_eap_aka_server_t {
 	bool synchronized;
 
 	/**
-	 * Auth data contains porperty on EAP_SUCCESS.
+	 * Auth data contains property on EAP_SUCCESS.
 	 */
 	auth_cfg_t *auth;
 };
