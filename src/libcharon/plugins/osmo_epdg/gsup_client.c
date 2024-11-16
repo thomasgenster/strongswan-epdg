@@ -418,7 +418,7 @@ METHOD(osmo_epdg_gsup_client_t, send_auth_request, osmo_epdg_gsup_response_t*,
 	{
 		if (auts->len != 14)
 		{
-			/* TODO: inval auts */
+			DBG1(DBG_NET, "epdg: gsupc: SAR: Invalid AUTS.");
 			return NULL;
 		}
 
@@ -430,7 +430,7 @@ METHOD(osmo_epdg_gsup_client_t, send_auth_request, osmo_epdg_gsup_response_t*,
 	{
 		if (auts_rand->len != 16)
 		{
-			/* TODO: inval auts */
+			DBG1(DBG_NET, "epdg: gsupc: SAR: Invalid RAND.");
 			return NULL;
 		}
 
