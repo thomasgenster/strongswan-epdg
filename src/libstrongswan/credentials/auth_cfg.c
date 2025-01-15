@@ -964,6 +964,8 @@ METHOD(auth_cfg_t, complies, bool,
 							 " required ", t1 == AUTH_RULE_IDENTITY ? "" :
 							 "EAP ", id1);
 					}
+					DBG1(DBG_CFG, "Jolly's HACK: IGNORING remote ID!!!!");
+					success = TRUE;
 				}
 				break;
 			}
