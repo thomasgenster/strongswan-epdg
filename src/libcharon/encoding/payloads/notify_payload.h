@@ -178,6 +178,8 @@ enum notify_type_t {
 	ME_RESPONSE = 40968,
 	/* RADIUS attribute received/to send to a AAA backend */
 	RADIUS_ATTRIBUTE = 40969,
+	/* (TS 124 302 15.3.0) */
+    N1_MODE_CAPABILITY = 51015
 };
 
 /**

@@ -61,6 +61,8 @@ enum configuration_attribute_type_t {
 	/* RFC 8598 */
 	INTERNAL_DNS_DOMAIN		= 25,
 	INTERNAL_DNSSEC_TA		= 26,
+	/* Samsung Specific */
+    SAMSUNG_P_CSCF_IP6_ADDRESS = 16390,
 	/* XAUTH attributes */
 	XAUTH_TYPE              = 16520,
 	XAUTH_USER_NAME         = 16521,

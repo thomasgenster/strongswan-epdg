@@ -167,6 +167,12 @@ METHOD(payload_t, verify, status_t,
 				failed = TRUE;
 			}
 			break;
+		case SAMSUNG_P_CSCF_IP6_ADDRESS:
+			if (this->length_or_value != 0 && this->length_or_value != 16)
+			{
+				failed = TRUE;
+			}
+			break;
 		case SUPPORTED_ATTRIBUTES:
 			if (this->length_or_value % 2)
 			{

@@ -136,7 +136,9 @@ ENUM_NEXT(notify_type_names, ME_MEDIATION, RADIUS_ATTRIBUTE, USE_BEET_MODE,
 	"ME_CONNECTAUTH",
 	"ME_RESPONSE",
 	"RADIUS_ATTRIBUTE");
-ENUM_END(notify_type_names, RADIUS_ATTRIBUTE);
+ENUM_NEXT(notify_type_names, N1_MODE_CAPABILITY, N1_MODE_CAPABILITY, RADIUS_ATTRIBUTE,
+    "N1_MODE_CAPABILITY");
+ENUM_END(notify_type_names, N1_MODE_CAPABILITY);
 
 
 ENUM_BEGIN(notify_type_short_names, UNSUPPORTED_CRITICAL_PAYLOAD, UNSUPPORTED_CRITICAL_PAYLOAD,
@@ -250,7 +252,9 @@ ENUM_NEXT(notify_type_short_names, ME_MEDIATION, RADIUS_ATTRIBUTE, USE_BEET_MODE
 	"ME_CAUTH",
 	"ME_R",
 	"RADIUS");
-ENUM_END(notify_type_short_names, RADIUS_ATTRIBUTE);
+ENUM_NEXT(notify_type_short_names, N1_MODE_CAPABILITY, N1_MODE_CAPABILITY, RADIUS_ATTRIBUTE,
+    "N1_MODE_CAP");
+ENUM_END(notify_type_short_names, N1_MODE_CAPABILITY);
 
 
 typedef struct private_notify_payload_t private_notify_payload_t;

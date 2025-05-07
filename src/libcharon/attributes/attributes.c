@@ -44,7 +44,9 @@ ENUM_BEGIN(configuration_attribute_type_names, INTERNAL_IP4_ADDRESS, INTERNAL_DN
 	"TIMEOUT_PERIOD_FOR_DPD",
 	"INTERNAL_DNS_DOMAIN",
 	"INTERNAL_DNSSEC_TA");
-ENUM_NEXT(configuration_attribute_type_names, XAUTH_TYPE, XAUTH_ANSWER, INTERNAL_DNSSEC_TA,
+ENUM_NEXT(configuration_attribute_type_names, SAMSUNG_P_CSCF_IP6_ADDRESS, SAMSUNG_P_CSCF_IP6_ADDRESS, INTERNAL_DNSSEC_TA,
+    "SAMSUNG_P_CSCF_IP6_ADDRESS");
+ENUM_NEXT(configuration_attribute_type_names, XAUTH_TYPE, XAUTH_ANSWER, SAMSUNG_P_CSCF_IP6_ADDRESS,
 	"XAUTH_TYPE",
 	"XAUTH_USER_NAME",
 	"XAUTH_USER_PASSWORD",
@@ -99,7 +101,9 @@ ENUM_BEGIN(configuration_attribute_type_short_names, INTERNAL_IP4_ADDRESS, INTER
 	"DPD",
 	"DOMAIN",
 	"TA");
-ENUM_NEXT(configuration_attribute_type_short_names, XAUTH_TYPE, XAUTH_ANSWER, INTERNAL_DNSSEC_TA,
+ENUM_NEXT(configuration_attribute_type_short_names, SAMSUNG_P_CSCF_IP6_ADDRESS, SAMSUNG_P_CSCF_IP6_ADDRESS, INTERNAL_DNSSEC_TA,
+    "SAM_PCSCF6");
+ENUM_NEXT(configuration_attribute_type_short_names, XAUTH_TYPE, XAUTH_ANSWER, SAMSUNG_P_CSCF_IP6_ADDRESS,
 	"X_TYPE",
 	"X_USER",
 	"X_PWD",
