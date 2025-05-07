@@ -373,7 +373,7 @@ METHOD(osmo_epdg_gsup_client_t, tunnel_request, osmo_epdg_gsup_response_t*,
 
 METHOD(osmo_epdg_gsup_client_t, send_auth_request, osmo_epdg_gsup_response_t*,
         private_osmo_epdg_gsup_client_t *this, const char *imsi, uint8_t cn_domain,
-	chunk_t *auts, chunk_t *auts_rand, const char *apn, uint8_t pdp_type)
+	chunk_t *auts, chunk_t *auts_rand, const char *apn, uint8_t pdp_type, host_t *address4, host_t *address6)
 {
 	struct osmo_gsup_message gsup_msg = {0};
 	struct msgb *msg;
@@ -442,6 +442,28 @@ METHOD(osmo_epdg_gsup_client_t, send_auth_request, osmo_epdg_gsup_response_t*,
 	gsup_msg.pdp_infos[0].pdp_type_nr = pdp_type;
 	gsup_msg.pdp_infos[0].pdp_type_org = PDP_TYPE_ORG_IETF;
 
+	if (pdp_type == PDP_TYPE_N_IETF_IPv4)
+    {
+		chunk_t addr4 = address4->get_address(address4);
+        gsup_msg.pdp_infos[0].pdp_address[0].u.sa.sa_family = AF_INET;
+        memcpy(&gsup_msg.pdp_infos[0].pdp_address[0].u.sin.sin_addr, addr4.ptr, 4);
+    }
+    if (pdp_type == PDP_TYPE_N_IETF_IPv6)
+    {
+        chunk_t addr6 = address6->get_address(address6);
+        gsup_msg.pdp_infos[0].pdp_address[0].u.sa.sa_family = AF_INET6;
+        memcpy(&gsup_msg.pdp_infos[0].pdp_address[0].u.sin6.sin6_addr, addr6.ptr, 16);
+    }
+    if (pdp_type == PDP_TYPE_N_IETF_IPv4v6)
+    {
+        chunk_t addr4 = address4->get_address(address4);
+        gsup_msg.pdp_infos[0].pdp_address[0].u.sa.sa_family = AF_INET;
+        memcpy(&gsup_msg.pdp_infos[0].pdp_address[0].u.sin.sin_addr, addr4.ptr, 4);
+        chunk_t addr6 = address6->get_address(address6);
+        gsup_msg.pdp_infos[0].pdp_address[1].u.sa.sa_family = AF_INET6;
+        memcpy(&gsup_msg.pdp_infos[0].pdp_address[1].u.sin6.sin6_addr, addr6.ptr, 16);
+    }
+
 	ret = osmo_apn_from_str(apn_enc, APN_MAXLEN, apn);
 	if (ret < 0)
 	{
@@ -451,6 +473,8 @@ METHOD(osmo_epdg_gsup_client_t, send_auth_request, osmo_epdg_gsup_response_t*,
 	apn_enc_len = ret;
 	gsup_msg.pdp_infos[0].apn_enc = apn_enc;
 	gsup_msg.pdp_infos[0].apn_enc_len = apn_enc_len;
+	gsup_msg.pdp_infos[0].context_id = 1;
+    gsup_msg.pdp_infos[0].have_info = 1;
 	gsup_msg.num_pdp_infos = 1;
 
 	msg = encode_to_msgb(&gsup_msg);
@@ -572,6 +596,26 @@ void tx_insert_data_result(private_osmo_epdg_gsup_client_t *this, const char *im
 	this->ipa->send(this->ipa, IPAC_PROTO_EXT_GSUP, msg);
 }
 
+void tx_cancel_location_result(private_osmo_epdg_gsup_client_t *this, const char *imsi)
+{
+       struct osmo_gsup_message gsup_msg = {0};
+       struct msgb *msg;
+
+       gsup_msg.message_type = OSMO_GSUP_MSGT_LOCATION_CANCEL_RESULT;
+       if (imsi_copy(gsup_msg.imsi, imsi))
+       {
+               /* TODO: inval imsi! */
+               return;
+       }
+
+       msg = encode_to_msgb(&gsup_msg);
+       if (!msg)
+       {
+               DBG1(DBG_NET, "epdg: gsupc: ULR: Couldn't alloc/encode gsup message.");
+       }
+      this->ipa->send(this->ipa, IPAC_PROTO_EXT_GSUP, msg);
+}
+
 static void signal_request(gsup_request_t *req, osmo_epdg_gsup_response_t *resp)
 {
 	req->mutex->lock(req->mutex);
@@ -643,6 +687,10 @@ static bool on_recv_pdu(void *data, osmo_epdg_ipa_client_t *client, struct msgb 
 			req->lock->unlock(req->lock);
 			gsup_request_put(req);
 			break;
+			case OSMO_GSUP_MSGT_LOCATION_CANCEL_REQUEST:
+	            tx_cancel_location_result(this, resp->gsup.imsi);
+                goto out;
+
 		default:
 			DBG1(DBG_NET, "epdg: gsupc: received unknown message type %02x", resp->gsup.message_type);
 			goto out;

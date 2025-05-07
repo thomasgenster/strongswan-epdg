@@ -338,6 +338,27 @@ METHOD(task_t, process_r, status_t,
 METHOD(task_t, build_r, status_t,
 	private_ike_config_t *this, message_t *message)
 {
+	if (this->ike_sa->get_state(this->ike_sa) != IKE_ESTABLISHED)
+    {
+		/* get the ip requested during IKE_AUTH request*/
+		enumerator_t *enumerator;
+        enumerator_t *enumerator2;
+        linked_list_t *vips;
+        host_t *requested;
+
+		enumerator = this->ike_sa->create_attribute_enumerator(this->ike_sa);
+
+		vips = linked_list_create();
+        enumerator2 = this->vips->create_enumerator(this->vips);
+        while (enumerator2->enumerate(enumerator2, &requested))
+        {
+			DBG1(DBG_IKE, "peer requested virtual IP %H", requested);
+            this->ike_sa->add_virtual_ip(this->ike_sa, FALSE, requested);
+		}
+        enumerator2->destroy(enumerator2);
+        enumerator->destroy(enumerator);
+    }
+
 	if (this->ike_sa->get_state(this->ike_sa) == IKE_ESTABLISHED)
 	{	/* in last IKE_AUTH exchange */
 		enumerator_t *enumerator;

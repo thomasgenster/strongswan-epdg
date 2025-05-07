@@ -21,12 +21,14 @@
 
 #include <osmocom/core/msgb.h>
 #include <sa/ike_sa.h>
+#include <attributes/attributes.h>
 #include <utils/chunk.h>
 #include <utils/identification.h>
 
 #define IPA_ALLOC_SIZE 1200
 
 struct msgb *epdg_chunk_to_msgb(chunk_t *chunk);
+host_t* epdg_get_address_ike(ike_sa_t *ike_sa, uint8_t family);
 int epdg_get_imsi(identification_t *id, char *imsi, size_t imsi_len);
 int epdg_get_imsi_ike(ike_sa_t *ike_sa, char *imsi, size_t imsi_len);
 int epdg_validate_imsi(const char *imsi);

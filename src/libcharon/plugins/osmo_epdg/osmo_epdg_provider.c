@@ -81,6 +81,9 @@ METHOD(simaka_provider_t, get_quintuplet, bool,
 	char apn[APN_MAXLEN];
 	char imsi[17] = {0};
 	ike_sa_t *ike_sa;
+	host_t *address4;
+    host_t *address6;
+	uint8_t pdp_type = NULL;
 
 	if (epdg_get_imsi(id, imsi, sizeof(imsi) - 1))
 	{
@@ -95,6 +98,35 @@ METHOD(simaka_provider_t, get_quintuplet, bool,
 		return FALSE;
 	}
 
+	address4 = epdg_get_address_ike(ike_sa, AF_INET);
+    address6 = epdg_get_address_ike(ike_sa, AF_INET6);
+
+    if (address4 == NULL)
+    {
+	    DBG1(DBG_NET, "epdg: get_quintuplet: no IPv4 address requested");
+    }
+    else
+    {
+        DBG1(DBG_NET, "epdg: get_quintuplet: requested IPv4 address: %H", address4);
+        pdp_type = PDP_TYPE_N_IETF_IPv4;
+    }
+    if (address6 == NULL)
+    {
+        DBG1(DBG_NET, "epdg: get_quintuplet: no IPv6 address requested");
+    }
+    else
+    {
+        DBG1(DBG_NET, "epdg: get_quintuplet: requested IPv6 address: %H", address6);
+        if (pdp_type == PDP_TYPE_N_IETF_IPv4)
+        {
+			pdp_type = PDP_TYPE_N_IETF_IPv4v6;
+        }
+        else
+        {
+            pdp_type = PDP_TYPE_N_IETF_IPv6;
+        }
+    }
+
 	if (epdg_get_apn(ike_sa, apn, APN_MAXLEN))
 	{
 		DBG1(DBG_NET, "epdg: get_quintuplet: Can't get APN.");
@@ -102,7 +134,7 @@ METHOD(simaka_provider_t, get_quintuplet, bool,
 	}
 
 	osmo_epdg_gsup_response_t *resp = this->gsup->send_auth_request(
-			this->gsup, imsi, OSMO_GSUP_CN_DOMAIN_PS, NULL, NULL, apn, PDP_TYPE_N_IETF_IPv4);
+			this->gsup, imsi, OSMO_GSUP_CN_DOMAIN_PS, NULL, NULL, apn, pdp_type, address4, address6);
 	if (!resp)
 	{
 		DBG1(DBG_NET, "epdg_provider: Failed to send auth request.");
@@ -160,7 +192,7 @@ METHOD(attribute_provider_t, acquire_address, host_t*,
 {
 	/* yes this hurts. We can either move the attribute provider out of this class or do some pointer arithmetic to get the right this object */
 	this = container_of((void *) this, private_osmo_epdg_provider_t, public.attribute);
-	if (requested->get_family(requested) != AF_INET)
+	if (requested->get_family(requested) != AF_INET && requested->get_family(requested) != AF_INET6)
 	{
 		return NULL;
 	}

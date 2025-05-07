@@ -165,8 +165,7 @@ METHOD(listener_t, authorize, bool,
 	/* validate Tunnel Response */
 	if ((resp->gsup.num_pdp_infos != 1) ||
 	    (!resp->gsup.pdp_infos[0].have_info) ||
-	    (resp->gsup.pdp_infos[0].pdp_type_org != PDP_TYPE_ORG_IETF) ||
-	    (resp->gsup.pdp_infos[0].pdp_type_nr != PDP_TYPE_N_IETF_IPv4))
+	    (resp->gsup.pdp_infos[0].pdp_type_org != PDP_TYPE_ORG_IETF))
 	{
 		DBG1(DBG_NET, "epdg_listener: Tunnel Response: IMSI %s: received incomplete message/wrong content", imsi);
 		goto err;
@@ -174,7 +173,7 @@ METHOD(listener_t, authorize, bool,
 
 	pdp_info = &resp->gsup.pdp_infos[0];
 	/* if the sa_family is set, the address is valid */
-	if (pdp_info->pdp_address[0].u.sa.sa_family != AF_INET)
+	if (pdp_info->pdp_address[0].u.sa.sa_family != AF_INET && pdp_info->pdp_address[0].u.sa.sa_family != AF_INET6)
 	{
 		DBG1(DBG_NET, "epdg_listener: Tunnel Response: IMSI %s: received wrong PDP info", imsi);
 		goto err;

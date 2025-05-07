@@ -21,6 +21,7 @@
 
 #include <osmocom/core/msgb.h>
 #include <sa/ike_sa.h>
+#include <attributes/attributes.h>
 #include <utils/utils.h>
 #include <utils/debug.h>
 
@@ -43,6 +44,29 @@ struct msgb *epdg_chunk_to_msgb(chunk_t *chunk)
 	msg->tail = msg->_data;
 	return msg;
 }
+
+host_t* epdg_get_address_ike(ike_sa_t *ike_sa, uint8_t family)
+{
+	host_t *me;
+    host_t *ip = NULL;
+    enumerator_t *enumerator = ike_sa->create_virtual_ip_enumerator(ike_sa, FALSE);
+
+    while (enumerator->enumerate(enumerator, &me))
+    {
+		switch (me->get_family(me))
+        {
+			case AF_INET:
+				if (family == me->get_family(me)) { ip = me->clone(me); }
+                break;
+            case AF_INET6:
+                if (family == me->get_family(me)) { ip = me->clone(me); }
+                break;
+        }
+    }
+    enumerator->destroy(enumerator);
+    return ip;
+}
+
 
 int epdg_get_imsi_ike(ike_sa_t *ike_sa, char *imsi, size_t imsi_len)
 {
