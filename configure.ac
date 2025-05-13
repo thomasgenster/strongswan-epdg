@@ -196,6 +196,7 @@ ARG_ENABL_SET([dnscert],        [enable DNSCERT authentication plugin.])
 ARG_ENABL_SET([eap-sim],        [enable SIM authentication module for EAP.])
 ARG_ENABL_SET([eap-sim-file],   [enable EAP-SIM backend based on a triplet file.])
 ARG_ENABL_SET([eap-sim-pcsc],   [enable EAP-SIM backend based on a smartcard reader. Requires libpcsclite.])
+ARG_ENABL_SET([eap-sim-http],   [enable EAP-SIM backend based on USIM http server.])
 ARG_ENABL_SET([eap-aka],        [enable EAP AKA authentication module.])
 ARG_ENABL_SET([eap-aka-3gpp],   [enable EAP AKA backend implementing 3GPP MILENAGE algorithms in software.])
 ARG_ENABL_SET([eap-aka-3gpp2],  [enable EAP AKA backend implementing 3GPP2 algorithms in software. Requires libgmp.])
@@ -1209,6 +1210,12 @@ if test x$eap_sim_pcsc = xtrue; then
 	AC_SUBST(pcsclite_LIBS)
 fi
 
+if test x$eap_sim_http = xtrue; then
+	PKG_CHECK_MODULES(lcurl, [libcurl])
+	AC_SUBST(lcurl_CFLAGS)
+	AC_SUBST(lcurl_LIBS)
+fi
+
 if test x$nm = xtrue; then
 	PKG_CHECK_MODULES(nm, [gthread-2.0 libnm])
 	AC_SUBST(nm_CFLAGS)
@@ -1526,6 +1533,7 @@ ADD_PLUGIN([eap-identity],         [c charon nm cmd])
 ADD_PLUGIN([eap-sim],              [c charon])
 ADD_PLUGIN([eap-sim-file],         [c charon])
 ADD_PLUGIN([eap-sim-pcsc],         [c charon])
+ADD_PLUGIN([eap-sim-http],         [c charon])
 ADD_PLUGIN([eap-aka],              [c charon])
 ADD_PLUGIN([eap-aka-3gpp],         [c charon])
 ADD_PLUGIN([eap-aka-3gpp2],        [c charon])
@@ -1699,6 +1707,7 @@ AM_CONDITIONAL(USE_COUPLING, test x$coupling = xtrue)
 AM_CONDITIONAL(USE_RADATTR, test x$radattr = xtrue)
 AM_CONDITIONAL(USE_EAP_SIM, test x$eap_sim = xtrue)
 AM_CONDITIONAL(USE_EAP_SIM_FILE, test x$eap_sim_file = xtrue)
+AM_CONDITIONAL(USE_EAP_SIM_HTTP, test x$eap_sim_http = xtrue)
 AM_CONDITIONAL(USE_EAP_SIM_PCSC, test x$eap_sim_pcsc = xtrue)
 AM_CONDITIONAL(USE_EAP_SIMAKA_SQL, test x$eap_simaka_sql = xtrue)
 AM_CONDITIONAL(USE_EAP_SIMAKA_PSEUDONYM, test x$eap_simaka_pseudonym = xtrue)
@@ -1992,6 +2001,7 @@ AC_CONFIG_FILES([
 	src/libcharon/plugins/eap_gtc/Makefile
 	src/libcharon/plugins/eap_sim/Makefile
 	src/libcharon/plugins/eap_sim_file/Makefile
+	src/libcharon/plugins/eap_sim_http/Makefile
 	src/libcharon/plugins/eap_sim_pcsc/Makefile
 	src/libcharon/plugins/eap_simaka_sql/Makefile
 	src/libcharon/plugins/eap_simaka_pseudonym/Makefile

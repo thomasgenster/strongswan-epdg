@@ -355,6 +355,13 @@ if MONOLITHIC
 endif
 endif
 
+if USE_EAP_SIM_HTTP
+  SUBDIRS += plugins/eap_sim_http
+if MONOLITHIC
+  libcharon_la_LIBADD += plugins/eap_sim_http/libstrongswan-eap-sim-http.la
+endif
+endif
+
 if USE_EAP_SIMAKA_SQL
   SUBDIRS += plugins/eap_simaka_sql
 if MONOLITHIC

@@ -134,7 +134,7 @@ METHOD(fetcher_t, fetch, status_t,
 	}
 	else if (!this->result)
 	{	/* only log an error if the code is not returned */
-		DBG1(DBG_LIB, "HTTP request failed: %s", message->reason_phrase);
+		DBG1(DBG_LIB, "HTTP request failed with: %s", message->reason_phrase);
 	}
 	g_object_unref(G_OBJECT(message));
 	g_object_unref(G_OBJECT(data.session));
