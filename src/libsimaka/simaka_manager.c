@@ -98,7 +98,7 @@ METHOD(simaka_manager_t, card_get_triplet, bool,
 	}
 	enumerator->destroy(enumerator);
 	this->lock->unlock(this->lock);
-	DBG1(DBG_LIB, "tried %d SIM cards, but none has triplets for '%Y'",
+	DBG1(DBG_LIB, "tried %d SIM cards but none has triplets for '%Y'",
 		 tried, id);
 	return FALSE;
 }
@@ -134,7 +134,7 @@ METHOD(simaka_manager_t, card_get_quintuplet, status_t,
 	}
 	enumerator->destroy(enumerator);
 	this->lock->unlock(this->lock);
-	DBG1(DBG_LIB, "tried %d SIM cards, but none has quintuplets for '%Y'",
+	DBG1(DBG_LIB, "tried %d SIM cards but none has quintuplets for '%Y'",
 		 tried, id);
 	return status;
 }
