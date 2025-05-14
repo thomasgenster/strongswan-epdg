@@ -965,6 +965,7 @@ METHOD(auth_cfg_t, complies, bool,
 							 "EAP ", id1);
 					}
 					DBG1(DBG_CFG, "Jolly's HACK: IGNORING remote ID!!!!");
+					DBG1(DBG_CFG, "Doing another thing");
 					success = TRUE;
 				}
 				break;

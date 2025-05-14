@@ -117,7 +117,7 @@ METHOD(simaka_card_t, get_triplet, bool,
 	rv = SCardListReaders(hContext, NULL, NULL, &dwReaders);
 	if (rv != SCARD_S_SUCCESS)
 	{
-		DBG1(DBG_IKE, "SCardListReaders: %s", pcsc_stringify_error(rv));
+		DBG1(DBG_IKE, "SCardListReaders120: %s", pcsc_stringify_error(rv));
 		return FALSE;
 	}
 	mszReaders = malloc(sizeof(char)*dwReaders);
@@ -125,7 +125,7 @@ METHOD(simaka_card_t, get_triplet, bool,
 	rv = SCardListReaders(hContext, NULL, mszReaders, &dwReaders);
 	if (rv != SCARD_S_SUCCESS)
 	{
-		DBG1(DBG_IKE, "SCardListReaders: %s", pcsc_stringify_error(rv));
+		DBG1(DBG_IKE, "SCardListReaders128: %s", pcsc_stringify_error(rv));
 		free(mszReaders);
 		return FALSE;
 	}
@@ -388,7 +388,7 @@ METHOD(simaka_card_t, get_quintuplet, status_t,
 	rv = SCardListReaders(hContext, NULL, NULL, &dwReaders);
 	if (rv != SCARD_S_SUCCESS)
 	{
-		DBG1(DBG_IKE, "SCardListReaders: %s", pcsc_stringify_error(rv));
+		DBG1(DBG_IKE, "SCardListReaders391 he: %s", pcsc_stringify_error(rv));
 		return FAILED;
 	}
 	mszReaders = malloc(sizeof(char)*dwReaders);
@@ -396,7 +396,7 @@ METHOD(simaka_card_t, get_quintuplet, status_t,
 	rv = SCardListReaders(hContext, NULL, mszReaders, &dwReaders);
 	if (rv != SCARD_S_SUCCESS)
 	{
-		DBG1(DBG_IKE, "SCardListReaders: %s", pcsc_stringify_error(rv));
+		DBG1(DBG_IKE, "SCardListReaders399: %s", pcsc_stringify_error(rv));
 		free(mszReaders);
 		return FAILED;
 	}

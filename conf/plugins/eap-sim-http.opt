@@ -1,0 +1,2 @@
+charon.plugins.eap-sim-http.load := yes
+	Whether to load the plugin.
