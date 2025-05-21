@@ -59,51 +59,111 @@ static bool parse_json_response(char *json, char *res, int *res_len,
                               char *ck, char *ik)
 {
     char *ptr;
+    char *clean_json;
     char hex[3] = {0};
-    int i;
-	DBG1(DBG_IKE, "Finding RES");
+    int i, j;
+    char res_str[AKA_RES_MAX * 2 + 1] = {0};  // Buffer for string representation
+    char ck_str[AKA_CK_LEN * 2 + 1] = {0};    // Buffer for string representation
+    char ik_str[AKA_IK_LEN * 2 + 1] = {0};    // Buffer for string representation
+
+    /* Create a clean copy without spaces or linebreaks */
+    clean_json = malloc(strlen(json) + 1);
+    if (!clean_json) return FALSE;
+
+    /* Copy while removing whitespace */
+    for (i = 0, j = 0; json[i]; i++) {
+        if (json[i] != ' ' && json[i] != '\t' && json[i] != '\n' && json[i] != '\r') {
+            clean_json[j++] = json[i];
+        }
+    }
+    clean_json[j] = '\0';
+
+    DBG1(DBG_IKE, "Finding RES");
     /* Find RES */
-    ptr = strstr(json, "\"res\":\"");
-    if (!ptr) return FALSE;
+    ptr = strstr(clean_json, "\"res\":\"");
+    if (!ptr) {
+        free(clean_json);
+        return FALSE;
+    }
     ptr += 7;
 
+    /* Copy the original hex string for logging */
+    for (i = 0; i < AKA_RES_MAX * 2 && ptr[i] && ptr[i] != '"'; i++) {
+        res_str[i] = ptr[i];
+    }
+    res_str[i] = '\0';
+
     /* Parse RES hex string */
-    for (i = 0; i < AKA_RES_MAX && ptr[i*2] && ptr[i*2+1]; i++) {
+    for (i = 0; i < AKA_RES_MAX && ptr[i*2] && ptr[i*2+1] && ptr[i*2] != '"'; i++) {
         hex[0] = ptr[i*2];
         hex[1] = ptr[i*2+1];
         res[i] = (char)strtol(hex, NULL, 16);
     }
     *res_len = i;
+    res[i] = '\0';  // Null-terminate for safe printing
 
-	DBG1(DBG_IKE, "Finding CK");
+    DBG1(DBG_IKE, "RES: %s", res_str);
+
+    DBG1(DBG_IKE, "Finding CK");
     /* Find CK */
-    ptr = strstr(json, "\"ck\":\"");
-    if (!ptr) return FALSE;
+    ptr = strstr(clean_json, "\"ck\":\"");
+    if (!ptr) {
+        free(clean_json);
+        return FALSE;
+    }
     ptr += 6;
 
+    /* Copy the original hex string for logging */
+    for (i = 0; i < AKA_CK_LEN * 2 && ptr[i] && ptr[i] != '"'; i++) {
+        ck_str[i] = ptr[i];
+    }
+    ck_str[i] = '\0';
+
     /* Parse CK hex string */
-    for (i = 0; i < AKA_CK_LEN && ptr[i*2] && ptr[i*2+1]; i++) {
+    for (i = 0; i < AKA_CK_LEN && ptr[i*2] && ptr[i*2+1] && ptr[i*2] != '"'; i++) {
         hex[0] = ptr[i*2];
         hex[1] = ptr[i*2+1];
         ck[i] = (char)strtol(hex, NULL, 16);
     }
-    if (i != AKA_CK_LEN) return FALSE;
+    if (i != AKA_CK_LEN) {
+        free(clean_json);
+        return FALSE;
+    }
+    ck[i] = '\0';  // Null-terminate for safe printing
+
+    DBG1(DBG_IKE, "CK: %s", ck_str);
 
     /* Find IK */
-	DBG1(DBG_IKE, "Finding IK");
-    ptr = strstr(json, "\"ik\":\"");
-    if (!ptr) return FALSE;
+    DBG1(DBG_IKE, "Finding IK");
+    ptr = strstr(clean_json, "\"ik\":\"");
+    if (!ptr) {
+        free(clean_json);
+        return FALSE;
+    }
     ptr += 6;
 
+    /* Copy the original hex string for logging */
+    for (i = 0; i < AKA_IK_LEN * 2 && ptr[i] && ptr[i] != '"'; i++) {
+        ik_str[i] = ptr[i];
+    }
+    ik_str[i] = '\0';
+
     /* Parse IK hex string */
-    for (i = 0; i < AKA_IK_LEN && ptr[i*2] && ptr[i*2+1]; i++) {
+    for (i = 0; i < AKA_IK_LEN && ptr[i*2] && ptr[i*2+1] && ptr[i*2] != '"'; i++) {
         hex[0] = ptr[i*2];
         hex[1] = ptr[i*2+1];
         ik[i] = (char)strtol(hex, NULL, 16);
     }
-    if (i != AKA_IK_LEN) return FALSE;
-	DBG1(DBG_IKE, "Done parsing");
+    if (i != AKA_IK_LEN) {
+        free(clean_json);
+        return FALSE;
+    }
+    ik[i] = '\0';  // Null-terminate for safe printing
 
+    DBG1(DBG_IKE, "IK: %s", ik_str);
+    DBG1(DBG_IKE, "Done parsing");
+
+    free(clean_json);
     return TRUE;
 }
 
@@ -212,9 +272,7 @@ METHOD(simaka_card_t, get_quintuplet, status_t,
         DBG1(DBG_IKE, "Failed to parse JSON response: '%s'", response.data);
         goto cleanup;
     }
-
-	DBG1(DBG_IKE, "Done making calls.");
-    DBG1(DBG_IKE, "Got quintuplet from HTTP server (res: '%s', ck: '%s', ik: '%s')", res, ck, ik);
+	DBG1(DBG_IKE, "Parsed: %s", response.data);
     status = SUCCESS;
 
 cleanup:
